@@ -1,0 +1,75 @@
+# Sistema de Gestão para Psicóloga
+
+Backend Python seguindo **Clean Architecture** para gerenciamento de pacientes, sessões e lançamentos financeiros.
+
+## Arquitetura
+
+```
+app/
+├── core/           # Configurações, logger, exceções comuns
+├── domain/         # Entidades e regras de negócio puras
+│   ├── entities/   # Patient, Session, FinancialEntry
+│   └── repositories/  # Interfaces (ports)
+├── use_cases/      # Casos de uso (application layer)
+│   ├── patient/
+│   ├── session/
+│   └── financial/
+├── infra/          # Implementações concretas
+│   ├── database/
+│   └── repositories/
+└── interfaces/     # Controllers HTTP (adapters)
+    └── http/
+```
+
+## Funcionalidades
+
+- **Pacientes**: CRUD completo
+- **Sessões**: Agendar, concluir, cancelar
+- **Financeiro**: Lançamentos automáticos ao concluir sessão
+
+### Regra de Negócio Principal
+> Quando uma sessão é **concluída**, o sistema gera automaticamente um **lançamento financeiro pendente**.
+
+## Requisitos
+
+- Python 3.11+
+- Dependências: ver `requirements.txt`
+
+## Setup
+
+```bash
+# Criar virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Configurar variáveis de ambiente
+cp .env.example .env
+# Editar .env conforme necessário
+
+# Rodar testes
+pytest
+```
+
+## Deploy
+
+### Container (ECS/Fargate)
+```bash
+docker build -t psychologist-system .
+docker run -p 8000:8000 psychologist-system
+```
+
+### AWS Lambda
+Usar Mangum como adapter para FastAPI (implementação futura).
+
+## Próximos Passos
+
+1. [ ] Implementar lógica nas entidades do domínio
+2. [ ] Implementar casos de uso
+3. [ ] Implementar repositórios (PostgreSQL ou DynamoDB)
+4. [ ] Implementar controllers FastAPI
+5. [ ] Adicionar autenticação
+6. [ ] Configurar CI/CD

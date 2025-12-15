@@ -1,0 +1,122 @@
+"""Dependency Injection para FastAPI.
+
+Configura e fornece instâncias de repositórios e casos de uso.
+"""
+
+from typing import Annotated, AsyncGenerator
+
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.infra.db.database import get_database_manager
+from app.infra.repositories import (
+    SqlAlchemyPatientRepository,
+    SqlAlchemySessionRepository,
+    SqlAlchemyFinancialEntryRepository,
+)
+from app.domain.repositories.patient_repository import PatientRepository
+from app.domain.repositories.session_repository import SessionRepository
+from app.domain.repositories.financial_repository import FinancialEntryRepository
+from app.use_cases.patient.create_patient import CreatePatientUseCase
+from app.use_cases.patient.list_patients import ListPatientsUseCase
+from app.use_cases.session.schedule_session import CreateSessionUseCase
+from app.use_cases.session.list_sessions import ListSessionsUseCase
+from app.use_cases.session.update_session_status import UpdateSessionStatusUseCase
+from app.use_cases.financial.financial_report import FinancialReportUseCase
+
+
+# ============================================================
+# Database Session
+# ============================================================
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Fornece sessão do banco de dados."""
+    db = get_database_manager()
+    async with db.session() as session:
+        yield session
+
+
+DbSession = Annotated[AsyncSession, Depends(get_db_session)]
+
+
+# ============================================================
+# Repositories
+# ============================================================
+
+async def get_patient_repository(session: DbSession) -> PatientRepository:
+    """Fornece repositório de pacientes."""
+    return SqlAlchemyPatientRepository(session)
+
+
+async def get_session_repository(session: DbSession) -> SessionRepository:
+    """Fornece repositório de sessões."""
+    return SqlAlchemySessionRepository(session)
+
+
+async def get_financial_repository(session: DbSession) -> FinancialEntryRepository:
+    """Fornece repositório de lançamentos financeiros."""
+    return SqlAlchemyFinancialEntryRepository(session)
+
+
+PatientRepo = Annotated[PatientRepository, Depends(get_patient_repository)]
+SessionRepo = Annotated[SessionRepository, Depends(get_session_repository)]
+FinancialRepo = Annotated[FinancialEntryRepository, Depends(get_financial_repository)]
+
+
+# ============================================================
+# Use Cases
+# ============================================================
+
+async def get_create_patient_use_case(repo: PatientRepo) -> CreatePatientUseCase:
+    """Fornece caso de uso de criação de paciente."""
+    return CreatePatientUseCase(patient_repository=repo)
+
+
+async def get_list_patients_use_case(repo: PatientRepo) -> ListPatientsUseCase:
+    """Fornece caso de uso de listagem de pacientes."""
+    return ListPatientsUseCase(patient_repository=repo)
+
+
+async def get_create_session_use_case(
+    session_repo: SessionRepo,
+    patient_repo: PatientRepo,
+) -> CreateSessionUseCase:
+    """Fornece caso de uso de criação de sessão."""
+    return CreateSessionUseCase(
+        session_repository=session_repo,
+        patient_repository=patient_repo,
+    )
+
+
+async def get_list_sessions_use_case(
+    session_repo: SessionRepo,
+) -> ListSessionsUseCase:
+    """Fornece caso de uso de listagem de sessões."""
+    return ListSessionsUseCase(session_repository=session_repo)
+
+
+async def get_update_session_status_use_case(
+    session_repo: SessionRepo,
+    financial_repo: FinancialRepo,
+) -> UpdateSessionStatusUseCase:
+    """Fornece caso de uso de atualização de status."""
+    return UpdateSessionStatusUseCase(
+        session_repository=session_repo,
+        financial_repository=financial_repo,
+    )
+
+
+async def get_financial_report_use_case(
+    repo: FinancialRepo,
+) -> FinancialReportUseCase:
+    """Fornece caso de uso de relatório financeiro."""
+    return FinancialReportUseCase(financial_repository=repo)
+
+
+# Type aliases para injeção nos endpoints
+CreatePatientUC = Annotated[CreatePatientUseCase, Depends(get_create_patient_use_case)]
+ListPatientsUC = Annotated[ListPatientsUseCase, Depends(get_list_patients_use_case)]
+CreateSessionUC = Annotated[CreateSessionUseCase, Depends(get_create_session_use_case)]
+ListSessionsUC = Annotated[ListSessionsUseCase, Depends(get_list_sessions_use_case)]
+UpdateSessionStatusUC = Annotated[UpdateSessionStatusUseCase, Depends(get_update_session_status_use_case)]
+FinancialReportUC = Annotated[FinancialReportUseCase, Depends(get_financial_report_use_case)]

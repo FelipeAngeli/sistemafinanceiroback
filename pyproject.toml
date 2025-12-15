@@ -1,0 +1,26 @@
+[project]
+name = "psychologist-system"
+version = "0.1.0"
+description = "Sistema de gestão para psicóloga - Backend Python"
+requires-python = ">=3.11"
+readme = "README.md"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=app --cov-report=term-missing"
