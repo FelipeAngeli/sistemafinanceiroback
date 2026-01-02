@@ -43,7 +43,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
                                     "patient_name": "Maria Silva",
                                     "date_time": "2024-12-15T14:00:00",
                                     "price": 200.00,
-                                    "status": "agendada"
+                                    "status": "realizada"
                                 }
                             ],
                             "recent": [
@@ -53,7 +53,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
                                     "patient_name": "João Santos",
                                     "date_time": "2024-12-14T15:00:00",
                                     "price": 200.00,
-                                    "status": "concluida"
+                                    "status": "realizada"
                                 }
                             ],
                             "total_month": 25

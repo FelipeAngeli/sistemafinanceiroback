@@ -46,7 +46,7 @@ class TestFullFlow:
         Testa o fluxo completo:
         1. Criar paciente
         2. Criar sessão AGENDADA
-        3. Concluir sessão (gera lançamento PENDENTE)
+        3. Realizar sessão (gera lançamento PENDENTE)
         4. Marcar como PAGO
         5. Gerar relatório
         """
@@ -89,7 +89,7 @@ class TestFullFlow:
         session_id = session_output.id
 
         # ============================================================
-        # 3. Concluir Sessão (deve criar FinancialEntry PENDENTE)
+        # 3. Realizar Sessão (deve criar FinancialEntry PENDENTE)
         # ============================================================
         update_status_uc = UpdateSessionStatusUseCase(
             session_repository, financial_repository
@@ -97,14 +97,14 @@ class TestFullFlow:
 
         status_input = UpdateSessionStatusInput(
             session_id=session_id,
-            new_status=SessionStatus.CONCLUIDA,
+            new_status=SessionStatus.REALIZADA,
             notes="Sessão realizada com sucesso.",
         )
         status_output = await update_status_uc.execute(status_input)
 
         # Verificar transição de status
         assert status_output.previous_status == SessionStatus.AGENDADA
-        assert status_output.new_status == SessionStatus.CONCLUIDA
+        assert status_output.new_status == SessionStatus.REALIZADA
 
         # Verificar que lançamento foi criado
         assert status_output.financial_entry_id is not None
@@ -240,7 +240,7 @@ class TestFullFlow:
             await update_status_uc.execute(
                 UpdateSessionStatusInput(
                     session_id=session.id,
-                    new_status=SessionStatus.CONCLUIDA,
+                    new_status=SessionStatus.REALIZADA,
                 )
             )
 

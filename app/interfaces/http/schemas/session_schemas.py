@@ -86,7 +86,7 @@ class SessionResponse(BaseModel):
     date_time: datetime = Field(..., description="Data e hora da sessão")
     price: Decimal = Field(..., description="Valor da sessão em reais")
     duration_minutes: int = Field(..., description="Duração da sessão em minutos")
-    status: SessionStatus = Field(..., description="Status da sessão (agendada, concluida, cancelada)")
+    status: SessionStatus = Field(..., description="Status da sessão (agendada, realizada, cancelada, faltou)")
     notes: Optional[str] = Field(None, description="Observações sobre a sessão")
     created_at: datetime = Field(..., description="Data de criação do registro")
     updated_at: Optional[datetime] = Field(None, description="Data da última atualização")
@@ -99,23 +99,27 @@ class SessionStatusUpdate(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "new_status": "concluida",
+                    "new_status": "realizada",
                     "notes": "Sessão realizada com sucesso"
                 },
                 {
                     "new_status": "cancelada",
                     "notes": "Cancelada por solicitação do paciente"
+                },
+                {
+                    "new_status": "faltou",
+                    "notes": "Paciente não compareceu"
                 }
             ]
         }
     )
 
-    new_status: SessionStatus = Field(..., description="Novo status da sessão", examples=["concluida"])
+    new_status: SessionStatus = Field(..., description="Novo status da sessão", examples=["realizada"])
     notes: Optional[str] = Field(None, description="Observações sobre a mudança de status", examples=["Sessão realizada com sucesso"])
 
 
 class SessionStatusResponse(BaseModel):
-    """Schema de resposta para atualização de status. Quando concluída, gera lançamento financeiro."""
+    """Schema de resposta para atualização de status. Quando realizada, gera lançamento financeiro."""
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -123,7 +127,7 @@ class SessionStatusResponse(BaseModel):
                 {
                     "session_id": "123e4567-e89b-12d3-a456-426614174000",
                     "previous_status": "agendada",
-                    "new_status": "concluida",
+                    "new_status": "realizada",
                     "financial_entry_created": True,
                     "financial_entry_id": "456e7890-a12b-34c5-d678-901234567890",
                     "financial_entry_amount": 200.00

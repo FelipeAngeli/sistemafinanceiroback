@@ -28,7 +28,7 @@ class DashboardSessionItem(BaseModel):
     patient_name: str = Field(..., description="Nome do paciente")
     date_time: datetime = Field(..., description="Data e hora da sessão")
     price: Decimal = Field(..., description="Valor da sessão em reais")
-    status: str = Field(..., description="Status da sessão (agendada, concluida, cancelada)")
+    status: str = Field(..., description="Status da sessão (agendada, realizada, cancelada, faltou)")
 
 
 class DashboardSessionStats(BaseModel):

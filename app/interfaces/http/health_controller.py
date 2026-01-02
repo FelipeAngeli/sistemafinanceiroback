@@ -14,4 +14,4 @@ class HealthController:
 
     async def ready(self) -> dict:
         """GET /ready - Verifica se aplicação está pronta para receber tráfego."""
-        pass
+        return {"status": "ready"}

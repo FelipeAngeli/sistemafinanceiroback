@@ -58,20 +58,20 @@ class TestUpdateSessionStatusUseCase:
     # ============================================================
 
     @pytest.mark.asyncio
-    async def test_concluir_sessao_cria_lancamento_financeiro(
+    async def test_realizar_sessao_cria_lancamento_financeiro(
         self,
         use_case: UpdateSessionStatusUseCase,
         session_repo: FakeSessionRepository,
         financial_repo: FakeFinancialEntryRepository,
         agendada_session: Session,
     ):
-        """Ao concluir sessão, deve criar lançamento financeiro PENDENTE."""
+        """Ao realizar sessão, deve criar lançamento financeiro PENDENTE."""
         # Arrange
         await session_repo.create(agendada_session)
 
         input_data = UpdateSessionStatusInput(
             session_id=agendada_session.id,
-            new_status=SessionStatus.CONCLUIDA,
+            new_status=SessionStatus.REALIZADA,
         )
 
         # Act
@@ -79,7 +79,7 @@ class TestUpdateSessionStatusUseCase:
 
         # Assert - Status atualizado
         assert output.previous_status == SessionStatus.AGENDADA
-        assert output.new_status == SessionStatus.CONCLUIDA
+        assert output.new_status == SessionStatus.REALIZADA
 
         # Assert - Lançamento financeiro criado
         assert output.financial_entry_id is not None
@@ -92,7 +92,7 @@ class TestUpdateSessionStatusUseCase:
         assert pending[0].status == EntryStatus.PENDENTE
 
     @pytest.mark.asyncio
-    async def test_concluir_sessao_nao_duplica_lancamento(
+    async def test_realizar_sessao_nao_duplica_lancamento(
         self,
         use_case: UpdateSessionStatusUseCase,
         session_repo: FakeSessionRepository,
@@ -103,10 +103,10 @@ class TestUpdateSessionStatusUseCase:
         # Arrange - Criar sessão
         await session_repo.create(agendada_session)
 
-        # Act - Concluir primeira vez
+        # Act - Realizar primeira vez
         input_data = UpdateSessionStatusInput(
             session_id=agendada_session.id,
-            new_status=SessionStatus.CONCLUIDA,
+            new_status=SessionStatus.REALIZADA,
         )
         output1 = await use_case.execute(input_data)
 
@@ -114,6 +114,33 @@ class TestUpdateSessionStatusUseCase:
         pending = await financial_repo.list_pending()
         assert len(pending) == 1
         assert output1.financial_entry_id == pending[0].id
+
+    @pytest.mark.asyncio
+    async def test_marcar_faltou_nao_cria_lancamento(
+        self,
+        use_case: UpdateSessionStatusUseCase,
+        session_repo: FakeSessionRepository,
+        financial_repo: FakeFinancialEntryRepository,
+        agendada_session: Session,
+    ):
+        """Ao marcar como FALTOU, NÃO deve criar lançamento financeiro."""
+        # Arrange
+        await session_repo.create(agendada_session)
+
+        input_data = UpdateSessionStatusInput(
+            session_id=agendada_session.id,
+            new_status=SessionStatus.FALTOU,
+        )
+
+        # Act
+        output = await use_case.execute(input_data)
+
+        # Assert
+        assert output.new_status == SessionStatus.FALTOU
+        assert output.financial_entry_id is None
+
+        pending = await financial_repo.list_pending()
+        assert len(pending) == 0
 
     @pytest.mark.asyncio
     async def test_cancelar_sessao_nao_cria_lancamento(
@@ -143,19 +170,19 @@ class TestUpdateSessionStatusUseCase:
         assert len(pending) == 0
 
     @pytest.mark.asyncio
-    async def test_concluir_sessao_com_notas(
+    async def test_realizar_sessao_com_notas(
         self,
         use_case: UpdateSessionStatusUseCase,
         session_repo: FakeSessionRepository,
         agendada_session: Session,
     ):
-        """Ao concluir, deve atualizar notas da sessão."""
+        """Ao realizar, deve atualizar notas da sessão."""
         # Arrange
         await session_repo.create(agendada_session)
 
         input_data = UpdateSessionStatusInput(
             session_id=agendada_session.id,
-            new_status=SessionStatus.CONCLUIDA,
+            new_status=SessionStatus.REALIZADA,
             notes="Paciente apresentou melhora significativa.",
         )
 
@@ -178,7 +205,7 @@ class TestUpdateSessionStatusUseCase:
         """Deve lançar erro se sessão não existe."""
         input_data = UpdateSessionStatusInput(
             session_id=uuid4(),
-            new_status=SessionStatus.CONCLUIDA,
+            new_status=SessionStatus.REALIZADA,
         )
 
         with pytest.raises(NotFoundError) as exc_info:
@@ -187,12 +214,12 @@ class TestUpdateSessionStatusUseCase:
         assert "não encontrado" in exc_info.value.message
 
     @pytest.mark.asyncio
-    async def test_nao_pode_concluir_sessao_ja_cancelada(
+    async def test_nao_pode_realizar_sessao_ja_cancelada(
         self,
         use_case: UpdateSessionStatusUseCase,
         session_repo: FakeSessionRepository,
     ):
-        """Não deve permitir concluir sessão já cancelada."""
+        """Não deve permitir realizar sessão já cancelada."""
         # Arrange
         session = Session(
             patient_id=uuid4(),
@@ -206,30 +233,30 @@ class TestUpdateSessionStatusUseCase:
 
         input_data = UpdateSessionStatusInput(
             session_id=session.id,
-            new_status=SessionStatus.CONCLUIDA,
+            new_status=SessionStatus.REALIZADA,
         )
 
         # Act & Assert
         with pytest.raises(BusinessRuleError) as exc_info:
             await use_case.execute(input_data)
 
-        assert "não pode ser concluída" in exc_info.value.message
+        assert "não pode ser marcada como realizada" in exc_info.value.message
 
     @pytest.mark.asyncio
-    async def test_nao_pode_cancelar_sessao_ja_concluida(
+    async def test_nao_pode_cancelar_sessao_ja_realizada(
         self,
         use_case: UpdateSessionStatusUseCase,
         session_repo: FakeSessionRepository,
     ):
-        """Não deve permitir cancelar sessão já concluída."""
+        """Não deve permitir cancelar sessão já realizada."""
         # Arrange
         session = Session(
             patient_id=uuid4(),
             date_time=datetime(2024, 12, 15, 14, 0),
             price=Decimal("200.00"),
         )
-        # Bypass para criar como concluída
-        object.__setattr__(session, "status", SessionStatus.CONCLUIDA)
+        # Bypass para criar como realizada
+        object.__setattr__(session, "status", SessionStatus.REALIZADA)
         await session_repo.create(session)
 
         input_data = UpdateSessionStatusInput(

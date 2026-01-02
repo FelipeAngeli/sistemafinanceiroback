@@ -54,10 +54,10 @@ class TestSessionsAPI:
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_update_session_status_concluida(
+    async def test_update_session_status_realizada(
         self, client: AsyncClient, patient_id: str
     ):
-        """PATCH /sessions/{id}/status - concluir deve criar lançamento."""
+        """PATCH /sessions/{id}/status - realizar deve criar lançamento."""
         # Criar sessão
         create_response = await client.post(
             "/sessions",
@@ -69,16 +69,16 @@ class TestSessionsAPI:
         )
         session_id = create_response.json()["id"]
 
-        # Concluir
+        # Realizar
         response = await client.patch(
             f"/sessions/{session_id}/status",
-            json={"new_status": "concluida"},
+            json={"new_status": "realizada"},
         )
 
         assert response.status_code == 200
         data = response.json()
         assert data["previous_status"] == "agendada"
-        assert data["new_status"] == "concluida"
+        assert data["new_status"] == "realizada"
         assert data["financial_entry_created"] is True
         assert data["financial_entry_id"] is not None
         assert Decimal(data["financial_entry_amount"]) == Decimal("200.00")
@@ -117,7 +117,7 @@ class TestSessionsAPI:
         fake_id = "00000000-0000-0000-0000-000000000000"
         response = await client.patch(
             f"/sessions/{fake_id}/status",
-            json={"new_status": "concluida"},
+            json={"new_status": "realizada"},
         )
 
         assert response.status_code == 404
@@ -126,7 +126,7 @@ class TestSessionsAPI:
     async def test_update_session_business_rule_error(
         self, client: AsyncClient, patient_id: str
     ):
-        """PATCH /sessions/{id}/status - erro ao concluir sessão já cancelada."""
+        """PATCH /sessions/{id}/status - erro ao realizar sessão já cancelada."""
         # Criar sessão
         create_response = await client.post(
             "/sessions",
@@ -144,10 +144,10 @@ class TestSessionsAPI:
             json={"new_status": "cancelada"},
         )
 
-        # Tentar concluir sessão já cancelada (deve dar erro)
+        # Tentar realizar sessão já cancelada (deve dar erro)
         response = await client.patch(
             f"/sessions/{session_id}/status",
-            json={"new_status": "concluida"},
+            json={"new_status": "realizada"},
         )
 
         assert response.status_code == 422

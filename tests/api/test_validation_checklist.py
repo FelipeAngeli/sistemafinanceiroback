@@ -168,7 +168,7 @@ async def test_patch_session_validation(client: AsyncClient):
         "notes": "Updated notes",
         # Try to update status (should be ignored or fail validation if not in schema, 
         # but schema doesn't include status, so it should be ignored by Pydantic filtering)
-        "status": "concluida" 
+        "status": "realizada" 
     }
     
     res = await client.patch(f"/sessions/{session_id}", json=update_data)

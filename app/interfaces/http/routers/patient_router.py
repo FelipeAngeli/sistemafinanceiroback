@@ -103,7 +103,7 @@ async def create_patient(
         name=data.name,
         email=data.email,
         phone=data.phone,
-        notes=data.notes,
+        observation=data.observation,
     )
     output = await use_case.execute(input_data)
     return PatientResponse(
@@ -111,6 +111,7 @@ async def create_patient(
         name=output.name,
         email=output.email,
         phone=output.phone,
+        observation=output.observation,
         active=output.active,
     )
 
@@ -135,6 +136,7 @@ async def list_patients(
                 name=p.name,
                 email=p.email,
                 phone=p.phone,
+                observation=p.observation,
                 active=p.active,
             )
             for p in output.patients
@@ -165,5 +167,6 @@ async def get_patient(
         name=patient.name,
         email=patient.email,
         phone=patient.phone,
+        observation=patient.observation,
         active=patient.active,
     )

@@ -26,6 +26,7 @@ class PatientSummary:
     name: str
     email: Optional[str]
     phone: Optional[str]
+    observation: Optional[str]
     active: bool
 
 
@@ -59,6 +60,7 @@ class ListPatientsUseCase:
                 name=p.name,
                 email=p.email,
                 phone=p.phone,
+                observation=p.observation,
                 active=p.active,
             )
             for p in patients

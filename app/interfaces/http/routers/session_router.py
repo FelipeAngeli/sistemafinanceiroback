@@ -42,7 +42,7 @@ async def list_sessions(
     status: Optional[str] = Query(
         None,
         description="Filtrar por status",
-        pattern="^(agendada|concluida|cancelada)$",
+        pattern="^(agendada|realizada|cancelada|faltou)$",
     ),
     start_date: Optional[date] = Query(None, description="Data inicial"),
     end_date: Optional[date] = Query(None, description="Data final"),

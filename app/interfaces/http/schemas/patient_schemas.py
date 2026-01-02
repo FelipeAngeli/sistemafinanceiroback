@@ -17,12 +17,15 @@ class PatientCreate(BaseModel):
                     "name": "Maria Silva",
                     "email": "maria.silva@email.com",
                     "phone": "(11) 99999-9999",
-                    "notes": "Paciente com histórico de ansiedade. Prefere sessões no período da tarde."
+                    "observation": "Paciente com histórico de ansiedade. Prefere sessões no período da tarde.",
+                    "active": True
                 },
                 {
                     "name": "João Santos",
                     "email": "joao@email.com",
-                    "phone": "(21) 98888-8888"
+                    "phone": "(21) 98888-8888",
+                    "observation": None,
+                    "active": True
                 }
             ]
         }
@@ -31,7 +34,8 @@ class PatientCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=255, description="Nome completo do paciente", examples=["Maria Silva"])
     email: Optional[EmailStr] = Field(None, description="Email do paciente (opcional)", examples=["maria@email.com"])
     phone: Optional[str] = Field(None, max_length=50, description="Telefone de contato (opcional)", examples=["(11) 99999-9999"])
-    notes: Optional[str] = Field(None, description="Observações e anotações sobre o paciente", examples=["Observações sobre o paciente"])
+    observation: Optional[str] = Field(None, description="Observações e anotações sobre o paciente", examples=["Observações sobre o paciente"])
+    active: bool = Field(default=True, description="Indica se o paciente está ativo")
 
 
 class PatientResponse(BaseModel):
@@ -46,6 +50,7 @@ class PatientResponse(BaseModel):
                     "name": "Maria Silva",
                     "email": "maria.silva@email.com",
                     "phone": "(11) 99999-9999",
+                    "observation": "Observação importante",
                     "active": True
                 }
             ]
@@ -56,6 +61,7 @@ class PatientResponse(BaseModel):
     name: str = Field(..., description="Nome completo do paciente")
     email: Optional[str] = Field(None, description="Email do paciente")
     phone: Optional[str] = Field(None, description="Telefone de contato")
+    observation: Optional[str] = Field(None, description="Observações sobre o paciente")
     active: bool = Field(..., description="Indica se o paciente está ativo no sistema")
 
 
