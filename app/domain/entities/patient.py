@@ -12,6 +12,15 @@ from app.core.exceptions import ValidationError
 
 
 @dataclass
+class PatientStats:
+    """Estatísticas de pacientes."""
+    
+    total: int
+    active: int
+    inactive: int
+
+
+@dataclass
 class Patient:
     """Entidade Paciente."""
 

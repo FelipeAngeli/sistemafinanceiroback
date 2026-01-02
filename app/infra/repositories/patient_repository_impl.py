@@ -7,10 +7,10 @@ Esta implementação pode usar SQL, DynamoDB, ou qualquer persistência.
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entities.patient import Patient
+from app.domain.entities.patient import Patient, PatientStats
 from app.domain.repositories.patient_repository import PatientRepository
 from app.infra.db.mappers.patient_mapper import PatientMapper
 from app.infra.db.models.patient_model import PatientModel
@@ -21,6 +21,23 @@ class SqlAlchemyPatientRepository(PatientRepository):
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def get_stats(self) -> PatientStats:
+        """Retorna estatísticas gerais dos pacientes."""
+        stmt = select(
+            func.count(PatientModel.id).label("total"),
+            func.sum(case((PatientModel.active == True, 1), else_=0)).label("active"),
+            func.sum(case((PatientModel.active == False, 1), else_=0)).label("inactive"),
+        )
+        
+        result = await self._session.execute(stmt)
+        row = result.one()
+        
+        return PatientStats(
+            total=row.total or 0,
+            active=row.active or 0,
+            inactive=row.inactive or 0,
+        )
 
     async def create(self, patient: Patient) -> Patient:
         """Persiste um novo paciente."""

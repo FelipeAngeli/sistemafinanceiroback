@@ -9,20 +9,25 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.db.database import get_database_manager
-from app.infra.repositories import (
-    SqlAlchemyPatientRepository,
-    SqlAlchemySessionRepository,
-    SqlAlchemyFinancialEntryRepository,
-)
+from app.infra.repositories.patient_repository_impl import SqlAlchemyPatientRepository
+from app.infra.repositories.session_repository_impl import SqlAlchemySessionRepository
+from app.infra.repositories.financial_repository_impl import SqlAlchemyFinancialEntryRepository
+from app.infra.repositories.dashboard_repository_impl import SqlAlchemyDashboardRepository
+
 from app.domain.repositories.patient_repository import PatientRepository
 from app.domain.repositories.session_repository import SessionRepository
 from app.domain.repositories.financial_repository import FinancialEntryRepository
+from app.domain.repositories.dashboard_repository import DashboardRepository
 from app.use_cases.patient.create_patient import CreatePatientUseCase
 from app.use_cases.patient.list_patients import ListPatientsUseCase
+from app.use_cases.patient.get_patient_summary import GetPatientSummaryUseCase
 from app.use_cases.session.schedule_session import CreateSessionUseCase
 from app.use_cases.session.list_sessions import ListSessionsUseCase
+from app.use_cases.session.get_session_by_id import GetSessionByIdUseCase
+from app.use_cases.session.update_session import UpdateSessionUseCase
 from app.use_cases.session.update_session_status import UpdateSessionStatusUseCase
 from app.use_cases.financial.financial_report import FinancialReportUseCase
+from app.use_cases.dashboard.get_dashboard_summary import GetDashboardSummaryUseCase
 
 
 # ============================================================
@@ -58,9 +63,15 @@ async def get_financial_repository(session: DbSession) -> FinancialEntryReposito
     return SqlAlchemyFinancialEntryRepository(session)
 
 
+async def get_dashboard_repository(session: DbSession) -> DashboardRepository:
+    """Fornece repositório de dashboard."""
+    return SqlAlchemyDashboardRepository(session)
+
+
 PatientRepo = Annotated[PatientRepository, Depends(get_patient_repository)]
 SessionRepo = Annotated[SessionRepository, Depends(get_session_repository)]
 FinancialRepo = Annotated[FinancialEntryRepository, Depends(get_financial_repository)]
+DashboardRepo = Annotated[DashboardRepository, Depends(get_dashboard_repository)]
 
 
 # ============================================================
@@ -75,6 +86,11 @@ async def get_create_patient_use_case(repo: PatientRepo) -> CreatePatientUseCase
 async def get_list_patients_use_case(repo: PatientRepo) -> ListPatientsUseCase:
     """Fornece caso de uso de listagem de pacientes."""
     return ListPatientsUseCase(patient_repository=repo)
+
+
+async def get_patient_summary_use_case(repo: PatientRepo) -> GetPatientSummaryUseCase:
+    """Fornece caso de uso de resumo de pacientes."""
+    return GetPatientSummaryUseCase(patient_repository=repo)
 
 
 async def get_create_session_use_case(
@@ -95,6 +111,24 @@ async def get_list_sessions_use_case(
     return ListSessionsUseCase(session_repository=session_repo)
 
 
+async def get_get_session_by_id_use_case(
+    session_repo: SessionRepo,
+) -> GetSessionByIdUseCase:
+    """Fornece caso de uso de busca de sessão por ID."""
+    return GetSessionByIdUseCase(session_repository=session_repo)
+
+
+async def get_update_session_use_case(
+    session_repo: SessionRepo,
+    patient_repo: PatientRepo,
+) -> UpdateSessionUseCase:
+    """Fornece caso de uso de atualização de sessão."""
+    return UpdateSessionUseCase(
+        session_repository=session_repo,
+        patient_repository=patient_repo,
+    )
+
+
 async def get_update_session_status_use_case(
     session_repo: SessionRepo,
     financial_repo: FinancialRepo,
@@ -113,10 +147,21 @@ async def get_financial_report_use_case(
     return FinancialReportUseCase(financial_repository=repo)
 
 
+async def get_dashboard_summary_use_case(
+    repo: DashboardRepo,
+) -> GetDashboardSummaryUseCase:
+    """Fornece caso de uso de resumo do dashboard."""
+    return GetDashboardSummaryUseCase(dashboard_repository=repo)
+
+
 # Type aliases para injeção nos endpoints
 CreatePatientUC = Annotated[CreatePatientUseCase, Depends(get_create_patient_use_case)]
 ListPatientsUC = Annotated[ListPatientsUseCase, Depends(get_list_patients_use_case)]
+GetPatientSummaryUC = Annotated[GetPatientSummaryUseCase, Depends(get_patient_summary_use_case)]
 CreateSessionUC = Annotated[CreateSessionUseCase, Depends(get_create_session_use_case)]
 ListSessionsUC = Annotated[ListSessionsUseCase, Depends(get_list_sessions_use_case)]
+GetSessionByIdUC = Annotated[GetSessionByIdUseCase, Depends(get_get_session_by_id_use_case)]
+UpdateSessionUC = Annotated[UpdateSessionUseCase, Depends(get_update_session_use_case)]
 UpdateSessionStatusUC = Annotated[UpdateSessionStatusUseCase, Depends(get_update_session_status_use_case)]
 FinancialReportUC = Annotated[FinancialReportUseCase, Depends(get_financial_report_use_case)]
+GetDashboardSummaryUC = Annotated[GetDashboardSummaryUseCase, Depends(get_dashboard_summary_use_case)]

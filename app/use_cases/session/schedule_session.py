@@ -37,6 +37,9 @@ class CreateSessionOutput:
     price: Decimal
     duration_minutes: int
     status: SessionStatus
+    notes: Optional[str]
+    created_at: datetime
+    updated_at: Optional[datetime]
 
 
 class CreateSessionUseCase:
@@ -84,4 +87,7 @@ class CreateSessionUseCase:
             price=saved_session.price,
             duration_minutes=saved_session.duration_minutes,
             status=saved_session.status,
+            notes=saved_session.notes,
+            created_at=saved_session.created_at,
+            updated_at=saved_session.updated_at,
         )
