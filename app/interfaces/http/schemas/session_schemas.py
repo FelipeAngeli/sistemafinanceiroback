@@ -31,6 +31,7 @@ class SessionResponse(BaseModel):
     price: Decimal
     duration_minutes: int
     status: SessionStatus
+    notes: Optional[str] = None
 
 
 class SessionStatusUpdate(BaseModel):

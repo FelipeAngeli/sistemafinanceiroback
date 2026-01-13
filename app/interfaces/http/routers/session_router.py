@@ -5,7 +5,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Query, status
-from app.interfaces.http.dependencies import CreateSessionUC, ListSessionsUC, UpdateSessionStatusUC
+from app.interfaces.http.dependencies import CreateSessionUC, ListSessionsUC, GetSessionByIdUC, UpdateSessionStatusUC
 from app.interfaces.http.schemas.session_schemas import (
     SessionCreate,
     SessionListItem,
@@ -16,9 +16,43 @@ from app.interfaces.http.schemas.session_schemas import (
 )
 from app.use_cases.session.schedule_session import CreateSessionInput
 from app.use_cases.session.list_sessions import ListSessionsInput
+from app.use_cases.session.get_session_by_id import GetSessionByIdInput
 from app.use_cases.session.update_session_status import UpdateSessionStatusInput
 
 router = APIRouter(prefix="/sessions", tags=["Sessões"])
+
+
+@router.get(
+    "/{session_id}",
+    response_model=SessionResponse,
+    summary="Buscar sessão por ID",
+    description="Busca uma sessão específica pelo seu ID.",
+)
+async def get_session_by_id(
+    session_id: UUID,
+    use_case: GetSessionByIdUC,
+) -> SessionResponse:
+    """Busca uma sessão por ID.
+    
+    Validações:
+    - ID deve ser um UUID válido (validado automaticamente pelo FastAPI)
+    - Sessão deve existir no banco de dados
+    - Retorna 404 se sessão não encontrada
+    
+    Nota: Autenticação e verificação de permissões devem ser adicionadas
+    quando o sistema de autenticação for implementado.
+    """
+    input_data = GetSessionByIdInput(session_id=session_id)
+    output = await use_case.execute(input_data)
+    return SessionResponse(
+        id=output.id,
+        patient_id=output.patient_id,
+        date_time=output.date_time,
+        price=output.price,
+        duration_minutes=output.duration_minutes,
+        status=output.status,
+        notes=output.notes,
+    )
 
 
 @router.get(

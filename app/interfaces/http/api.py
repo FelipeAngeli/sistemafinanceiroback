@@ -14,6 +14,7 @@ from app.core.logger import get_logger
 from app.infra.db.database import get_database_manager
 from app.interfaces.http.exception_handlers import register_exception_handlers
 from app.interfaces.http.routers import (
+    dashboard_router,
     patient_router,
     session_router,
     financial_router,
@@ -106,6 +107,10 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
                 "name": "Financeiro",
                 "description": "Relatórios financeiros e listagem de lançamentos.",
             },
+            {
+                "name": "Dashboard",
+                "description": "Resumo consolidado do dashboard com múltiplas informações.",
+            },
         ],
         contact={
             "name": "Suporte",
@@ -133,5 +138,6 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
     app.include_router(patient_router)
     app.include_router(session_router)
     app.include_router(financial_router)
+    app.include_router(dashboard_router)
 
     return app

@@ -165,3 +165,147 @@ class TestSessionsAPI:
         )
 
         assert response.status_code == 422
+
+    # ============================================================
+    # Testes para GET /sessions/{id}
+    # ============================================================
+
+    @pytest.mark.asyncio
+    async def test_get_session_by_id_success(self, client: AsyncClient, patient_id: str):
+        """GET /sessions/{id} - deve retornar sessão existente corretamente."""
+        # Criar sessão
+        create_response = await client.post(
+            "/sessions",
+            json={
+                "patient_id": patient_id,
+                "date_time": "2024-01-15T14:30:00",
+                "price": 150.00,
+                "duration_minutes": 50,
+                "notes": "Observações da sessão",
+            },
+        )
+        session_id = create_response.json()["id"]
+
+        # Buscar sessão
+        response = await client.get(f"/sessions/{session_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Validar campos obrigatórios
+        assert data["id"] == session_id
+        assert data["patient_id"] == patient_id
+        assert data["status"] == "agendada"
+        assert Decimal(str(data["price"])) == Decimal("150.00")
+        assert data["duration_minutes"] == 50
+        assert data["notes"] == "Observações da sessão"
+
+        # Validar formato ISO 8601 do date_time
+        datetime.fromisoformat(data["date_time"].replace("Z", "+00:00"))
+
+    @pytest.mark.asyncio
+    async def test_get_session_by_id_with_null_notes(self, client: AsyncClient, patient_id: str):
+        """GET /sessions/{id} - deve retornar sessão com notes null."""
+        # Criar sessão sem notes
+        create_response = await client.post(
+            "/sessions",
+            json={
+                "patient_id": patient_id,
+                "date_time": "2024-01-15T14:30:00",
+                "price": 150.00,
+            },
+        )
+        session_id = create_response.json()["id"]
+
+        # Buscar sessão
+        response = await client.get(f"/sessions/{session_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["notes"] is None
+
+    @pytest.mark.asyncio
+    async def test_get_session_by_id_not_found(self, client: AsyncClient):
+        """GET /sessions/{id} - deve retornar 404 para sessão inexistente."""
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        response = await client.get(f"/sessions/{fake_id}")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "error" in data
+        assert data["error"]["code"] == "NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_get_session_by_id_invalid_uuid(self, client: AsyncClient):
+        """GET /sessions/{id} - deve retornar 422 para ID inválido (não UUID)."""
+        invalid_id = "not-a-uuid"
+        response = await client.get(f"/sessions/{invalid_id}")
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_get_session_by_id_all_statuses(self, client: AsyncClient, patient_id: str):
+        """GET /sessions/{id} - deve retornar sessão com diferentes status."""
+        statuses = ["agendada", "concluida", "cancelada"]
+
+        for status in statuses:
+            # Criar sessão
+            create_response = await client.post(
+                "/sessions",
+                json={
+                    "patient_id": patient_id,
+                    "date_time": "2024-01-15T14:30:00",
+                    "price": 150.00,
+                },
+            )
+            session_id = create_response.json()["id"]
+
+            # Atualizar status se necessário
+            if status != "agendada":
+                await client.patch(
+                    f"/sessions/{session_id}/status",
+                    json={"new_status": status},
+                )
+
+            # Buscar sessão
+            response = await client.get(f"/sessions/{session_id}")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == status
+
+    @pytest.mark.asyncio
+    async def test_get_session_by_id_data_types(self, client: AsyncClient, patient_id: str):
+        """GET /sessions/{id} - deve retornar tipos de dados corretos."""
+        # Criar sessão
+        create_response = await client.post(
+            "/sessions",
+            json={
+                "patient_id": patient_id,
+                "date_time": "2024-01-15T14:30:00",
+                "price": 150.50,
+                "duration_minutes": 60,
+                "notes": "Teste",
+            },
+        )
+        session_id = create_response.json()["id"]
+
+        # Buscar sessão
+        response = await client.get(f"/sessions/{session_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Validar tipos
+        assert isinstance(data["id"], str)  # UUID serializado como string
+        assert isinstance(data["patient_id"], str)  # UUID serializado como string
+        assert isinstance(data["date_time"], str)  # datetime serializado como ISO string
+        assert isinstance(data["price"], (int, float))  # Decimal serializado como número
+        assert isinstance(data["duration_minutes"], int)
+        assert isinstance(data["status"], str)
+        assert isinstance(data["notes"], str) or data["notes"] is None
+
+        # Validar valores específicos
+        assert Decimal(str(data["price"])) == Decimal("150.50")
+        assert data["duration_minutes"] == 60
+        assert data["status"] in ["agendada", "concluida", "cancelada"]

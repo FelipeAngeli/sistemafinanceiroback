@@ -22,7 +22,9 @@ from app.use_cases.patient.list_patients import ListPatientsUseCase
 from app.use_cases.session.schedule_session import CreateSessionUseCase
 from app.use_cases.session.list_sessions import ListSessionsUseCase
 from app.use_cases.session.update_session_status import UpdateSessionStatusUseCase
+from app.use_cases.session.get_session_by_id import GetSessionByIdUseCase
 from app.use_cases.financial.financial_report import FinancialReportUseCase
+from app.use_cases.dashboard.dashboard_summary import DashboardSummaryUseCase
 
 
 # ============================================================
@@ -95,6 +97,13 @@ async def get_list_sessions_use_case(
     return ListSessionsUseCase(session_repository=session_repo)
 
 
+async def get_session_by_id_use_case(
+    session_repo: SessionRepo,
+) -> GetSessionByIdUseCase:
+    """Fornece caso de uso de busca de sessão por ID."""
+    return GetSessionByIdUseCase(session_repository=session_repo)
+
+
 async def get_update_session_status_use_case(
     session_repo: SessionRepo,
     financial_repo: FinancialRepo,
@@ -113,10 +122,25 @@ async def get_financial_report_use_case(
     return FinancialReportUseCase(financial_repository=repo)
 
 
+async def get_dashboard_summary_use_case(
+    financial_repo: FinancialRepo,
+    session_repo: SessionRepo,
+    patient_repo: PatientRepo,
+) -> DashboardSummaryUseCase:
+    """Fornece caso de uso de resumo do dashboard."""
+    return DashboardSummaryUseCase(
+        financial_repository=financial_repo,
+        session_repository=session_repo,
+        patient_repository=patient_repo,
+    )
+
+
 # Type aliases para injeção nos endpoints
 CreatePatientUC = Annotated[CreatePatientUseCase, Depends(get_create_patient_use_case)]
 ListPatientsUC = Annotated[ListPatientsUseCase, Depends(get_list_patients_use_case)]
 CreateSessionUC = Annotated[CreateSessionUseCase, Depends(get_create_session_use_case)]
 ListSessionsUC = Annotated[ListSessionsUseCase, Depends(get_list_sessions_use_case)]
+GetSessionByIdUC = Annotated[GetSessionByIdUseCase, Depends(get_session_by_id_use_case)]
 UpdateSessionStatusUC = Annotated[UpdateSessionStatusUseCase, Depends(get_update_session_status_use_case)]
 FinancialReportUC = Annotated[FinancialReportUseCase, Depends(get_financial_report_use_case)]
+DashboardSummaryUC = Annotated[DashboardSummaryUseCase, Depends(get_dashboard_summary_use_case)]
