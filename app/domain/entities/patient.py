@@ -12,13 +12,22 @@ from app.core.exceptions import ValidationError
 
 
 @dataclass
+class PatientStats:
+    """Estatísticas de pacientes."""
+    
+    total: int
+    active: int
+    inactive: int
+
+
+@dataclass
 class Patient:
     """Entidade Paciente."""
 
     name: str
     email: Optional[str] = None
     phone: Optional[str] = None
-    notes: Optional[str] = None
+    observation: Optional[str] = None
     id: UUID = field(default_factory=uuid4)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
@@ -59,7 +68,7 @@ class Patient:
         name: Optional[str] = None,
         email: Optional[str] = None,
         phone: Optional[str] = None,
-        notes: Optional[str] = None,
+        observation: Optional[str] = None,
     ) -> None:
         """Atualiza dados do paciente."""
         if name is not None:
@@ -70,6 +79,6 @@ class Patient:
             self._validate_email()
         if phone is not None:
             self.phone = phone
-        if notes is not None:
-            self.notes = notes
+        if observation is not None:
+            self.observation = observation
         self.updated_at = datetime.utcnow()

@@ -19,6 +19,7 @@ from app.interfaces.http.routers import (
     session_router,
     financial_router,
     health_router,
+    dashboard_router,
 )
 
 logger = get_logger(__name__)

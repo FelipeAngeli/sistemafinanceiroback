@@ -16,6 +16,7 @@ class TestPatientsAPI:
                 "name": "Maria Silva",
                 "email": "maria@email.com",
                 "phone": "(11) 99999-9999",
+                "observation": "Paciente teste",
             },
         )
 
@@ -23,6 +24,7 @@ class TestPatientsAPI:
         data = response.json()
         assert data["name"] == "Maria Silva"
         assert data["email"] == "maria@email.com"
+        assert data["observation"] == "Paciente teste"
         assert data["active"] is True
         assert "id" in data
 

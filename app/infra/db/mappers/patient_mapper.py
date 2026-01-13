@@ -24,7 +24,7 @@ class PatientMapper:
             name=entity.name,
             email=entity.email,
             phone=entity.phone,
-            notes=entity.notes,
+            observation=entity.observation,
             active=entity.active,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
@@ -49,7 +49,7 @@ class PatientMapper:
         object.__setattr__(patient, "name", model.name)
         object.__setattr__(patient, "email", model.email)
         object.__setattr__(patient, "phone", model.phone)
-        object.__setattr__(patient, "notes", model.notes)
+        object.__setattr__(patient, "observation", model.observation)
         object.__setattr__(patient, "active", model.active)
         object.__setattr__(patient, "created_at", model.created_at)
         object.__setattr__(patient, "updated_at", model.updated_at)
@@ -69,7 +69,7 @@ class PatientMapper:
         model.name = entity.name
         model.email = entity.email
         model.phone = entity.phone
-        model.notes = entity.notes
+        model.observation = entity.observation
         model.active = entity.active
         model.updated_at = entity.updated_at
         return model

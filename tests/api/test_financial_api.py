@@ -30,10 +30,10 @@ class TestFinancialAPI:
         )
         session_id = session_response.json()["id"]
 
-        # Concluir sessão
+        # Realizar sessão
         status_response = await client.patch(
             f"/sessions/{session_id}/status",
-            json={"new_status": "concluida"},
+            json={"new_status": "realizada"},
         )
 
         return {

@@ -85,9 +85,9 @@ class UpdateSessionStatusUseCase:
         # 4. Persistir sessão atualizada
         await self._session_repository.update(session)
 
-        # 5. Se concluída, criar lançamento financeiro
+        # 5. Se realizada, criar lançamento financeiro
         financial_entry: Optional[FinancialEntry] = None
-        if input_data.new_status == SessionStatus.CONCLUIDA:
+        if input_data.new_status == SessionStatus.REALIZADA:
             financial_entry = await self._create_financial_entry_if_not_exists(session)
 
         # 6. Retornar output
@@ -103,10 +103,12 @@ class UpdateSessionStatusUseCase:
         self, session: Session, new_status: SessionStatus
     ) -> None:
         """Aplica a transição de status na entidade Session."""
-        if new_status == SessionStatus.CONCLUIDA:
-            session.complete()  # Valida internamente se pode concluir
+        if new_status == SessionStatus.REALIZADA:
+            session.mark_as_realized()
+        elif new_status == SessionStatus.FALTOU:
+            session.mark_as_missed()
         elif new_status == SessionStatus.CANCELADA:
-            session.cancel()  # Valida internamente se pode cancelar
+            session.cancel()
         elif new_status == SessionStatus.AGENDADA:
             raise BusinessRuleError(
                 "Não é possível voltar uma sessão para status AGENDADA."

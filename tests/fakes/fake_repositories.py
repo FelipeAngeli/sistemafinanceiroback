@@ -74,6 +74,31 @@ class FakeSessionRepository(SessionRepository):
         self._sessions[session.id] = session
         return session
 
+    async def list_all(
+        self,
+        patient_id: Optional[UUID] = None,
+        status: Optional[str] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        limit: int = 50,
+    ) -> List[Session]:
+        sessions = list(self._sessions.values())
+
+        if patient_id:
+            sessions = [s for s in sessions if s.patient_id == patient_id]
+
+        if status:
+            sessions = [s for s in sessions if s.status.value == status]
+
+        if start_date:
+            sessions = [s for s in sessions if s.date_time.date() >= start_date]
+
+        if end_date:
+            sessions = [s for s in sessions if s.date_time.date() <= end_date]
+
+        sessions.sort(key=lambda s: s.date_time, reverse=True)
+        return sessions[:limit]
+
 
 class FakeFinancialEntryRepository(FinancialEntryRepository):
     """Repositório fake de lançamentos financeiros (in-memory)."""

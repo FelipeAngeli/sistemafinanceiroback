@@ -17,8 +17,9 @@ class SessionStatus(str, Enum):
     """Status possíveis de uma sessão."""
 
     AGENDADA = "agendada"
-    CONCLUIDA = "concluida"
+    REALIZADA = "realizada"
     CANCELADA = "cancelada"
+    FALTOU = "faltou"
 
 
 @dataclass
@@ -58,20 +59,29 @@ class Session:
             raise ValidationError("Duração deve ser maior que zero.")
 
     def is_completable(self) -> bool:
-        """Verifica se sessão pode ser concluída."""
+        """Verifica se sessão pode ser marcada como realizada ou faltou."""
         return self.status == SessionStatus.AGENDADA
 
     def is_cancellable(self) -> bool:
         """Verifica se sessão pode ser cancelada."""
         return self.status == SessionStatus.AGENDADA
 
-    def complete(self) -> None:
-        """Marca sessão como concluída."""
+    def mark_as_realized(self) -> None:
+        """Marca sessão como realizada."""
         if not self.is_completable():
             raise BusinessRuleError(
-                f"Sessão com status '{self.status.value}' não pode ser concluída."
+                f"Sessão com status '{self.status.value}' não pode ser marcada como realizada."
             )
-        self.status = SessionStatus.CONCLUIDA
+        self.status = SessionStatus.REALIZADA
+        self.updated_at = datetime.utcnow()
+
+    def mark_as_missed(self) -> None:
+        """Marca sessão como faltou (paciente não compareceu)."""
+        if not self.is_completable():
+            raise BusinessRuleError(
+                f"Sessão com status '{self.status.value}' não pode ser marcada como faltou."
+            )
+        self.status = SessionStatus.FALTOU
         self.updated_at = datetime.utcnow()
 
     def cancel(self) -> None:

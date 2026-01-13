@@ -18,7 +18,7 @@ class CreatePatientInput:
     name: str
     email: Optional[str] = None
     phone: Optional[str] = None
-    notes: Optional[str] = None
+    observation: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -29,6 +29,7 @@ class CreatePatientOutput:
     name: str
     email: Optional[str]
     phone: Optional[str]
+    observation: Optional[str]
     active: bool
 
 
@@ -52,7 +53,7 @@ class CreatePatientUseCase:
             name=input_data.name,
             email=input_data.email,
             phone=input_data.phone,
-            notes=input_data.notes,
+            observation=input_data.observation,
         )
 
         # Persistir
@@ -64,5 +65,6 @@ class CreatePatientUseCase:
             name=saved_patient.name,
             email=saved_patient.email,
             phone=saved_patient.phone,
+            observation=saved_patient.observation,
             active=saved_patient.active,
         )

@@ -33,6 +33,8 @@ class GetSessionByIdOutput:
     duration_minutes: int
     status: SessionStatus
     notes: Optional[str]
+    created_at: datetime
+    updated_at: Optional[datetime]
 
 
 class GetSessionByIdUseCase:
@@ -66,4 +68,6 @@ class GetSessionByIdUseCase:
             duration_minutes=session.duration_minutes,
             status=session.status,
             notes=session.notes,
+            created_at=session.created_at,
+            updated_at=session.updated_at,
         )

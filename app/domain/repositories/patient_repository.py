@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID
 
-from app.domain.entities.patient import Patient
+from app.domain.entities.patient import Patient, PatientStats
 
 
 class PatientRepository(ABC):
@@ -18,6 +18,11 @@ class PatientRepository(ABC):
     Esta interface será implementada na camada de infraestrutura
     com a tecnologia de banco de dados escolhida (PostgreSQL, DynamoDB, etc).
     """
+
+    @abstractmethod
+    async def get_stats(self) -> PatientStats:
+        """Retorna estatísticas gerais dos pacientes (total, ativos, inativos)."""
+        ...
 
     @abstractmethod
     async def create(self, patient: Patient) -> Patient:

@@ -66,7 +66,11 @@ class Settings(BaseSettings):
 
     # CORS
     cors_origins: list[str] = Field(
-        default=["*"],
+        default=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",
+        ],
         description="Origens permitidas para CORS",
     )
 
