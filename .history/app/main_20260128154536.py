@@ -2,14 +2,11 @@
 
 Inicia a aplicação FastAPI.
 
-Para desenvolvimento:
+Para rodar:
     uvicorn app.main:app --reload
-    python -m app.main
 
-Para produção (com Gunicorn):
-    gunicorn app.main:app -c gunicorn.conf.py
-    
-Gunicorn usa UvicornWorker para suportar ASGI (FastAPI).
+Ou:
+    python -m app.main
 """
 
 from app.core.config import get_settings

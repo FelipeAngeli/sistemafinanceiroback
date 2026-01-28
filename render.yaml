@@ -1,0 +1,44 @@
+services:
+  # Serviço Web (Backend API)
+  # Documentação: https://render.com/docs/web-services
+  - type: web
+    name: sistemafinanceiroback
+    runtime: python  # Runtime: python, docker, etc.
+    region: oregon  # Regiões válidas: oregon, ohio, frankfurt, singapore, virginia
+    plan: starter  # starter, standard, pro
+    buildCommand: pip install -r requirements.txt
+    # Gunicorn com Uvicorn workers para produção (ASGI)
+    # IMPORTANTE: Bind em 0.0.0.0 e usar $PORT (padrão: 10000)
+    startCommand: gunicorn app.main:app -c gunicorn.conf.py
+    healthCheckPath: /health  # Endpoint para health check do Render
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"  # Valores devem ser strings
+      - key: LOG_LEVEL
+        value: INFO
+      - key: APP_NAME
+        value: PsychologistSystem
+      - key: WEB_CONCURRENCY
+        value: "2"  # Número de workers do Gunicorn (ajustar conforme recursos)
+      # DATABASE_URL será configurado automaticamente pelo Render quando você criar o PostgreSQL
+      # Ou configure manualmente:
+      # - key: DATABASE_URL
+      #   sync: false  # Para usar valor do PostgreSQL service abaixo
+    # Descomente e ajuste se quiser usar um PostgreSQL gerenciado pelo Render
+    # database:
+    #   - key: DATABASE_URL
+    #     fromDatabase:
+    #       name: sistemafinanceiro-db
+    #       property: connectionString
+
+databases:
+  # Banco de dados PostgreSQL (opcional - descomente se quiser criar via render.yaml)
+  - name: sistemafinanceiro-db
+    databaseName: psychologist
+    user: psychologist_user
+    plan: starter  # starter, standard, pro
+    region: oregon  # Regiões válidas: oregon, ohio, frankfurt, singapore, virginia
+    # PostgreSQL 15+ recomendado
+    # A connection string será automaticamente injetada como DATABASE_URL

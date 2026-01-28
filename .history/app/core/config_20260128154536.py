@@ -55,10 +55,7 @@ class Settings(BaseSettings):
     host: str = Field(default="0.0.0.0")
     port: int = Field(
         default=8000,
-        description=(
-            "Porta do servidor. Render define PORT dinamicamente via variável de ambiente "
-            "(padrão do Render: 10000). O valor será sobrescrito automaticamente quando PORT estiver definido."
-        ),
+        description="Porta do servidor. Render define PORT dinamicamente via variável de ambiente.",
     )
 
     @field_validator("port", mode="before")

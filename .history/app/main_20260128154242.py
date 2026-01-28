@@ -2,14 +2,11 @@
 
 Inicia a aplicação FastAPI.
 
-Para desenvolvimento:
+Para rodar:
     uvicorn app.main:app --reload
-    python -m app.main
 
-Para produção (com Gunicorn):
-    gunicorn app.main:app -c gunicorn.conf.py
-    
-Gunicorn usa UvicornWorker para suportar ASGI (FastAPI).
+Ou:
+    python -m app.main
 """
 
 from app.core.config import get_settings
@@ -20,20 +17,15 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    import os
     import sys
     import uvicorn
 
     settings = get_settings()
     # Desabilitar reload no Windows devido a problemas com multiprocessing
     use_reload = settings.debug and sys.platform != "win32"
-    
-    # Render define PORT via variável de ambiente
-    port = int(os.environ.get("PORT", settings.port))
-    
     uvicorn.run(
         "app.main:app",
-        host=settings.host,
-        port=port,
+        host="0.0.0.0",
+        port=10000,
         reload=use_reload,
     )

@@ -1,10 +1,9 @@
 # Core
 python-dotenv>=1.0.0
 
-# Web Framework
+# Web Framework (para futura implementação HTTP)
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
-gunicorn>=21.2.0  # Servidor WSGI/ASGI para produção
 
 # Validation & Settings
 pydantic>=2.5.0
