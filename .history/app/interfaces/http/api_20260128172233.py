@@ -123,16 +123,14 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
         },
     )
 
-    cors_allow_origins = [
-        "https://sistemafinanceiroback.onrender.com",
-        "http://localhost:8080",
-        "*",
-    ]
-
     # CORS - DEVE SER O PRIMEIRO MIDDLEWARE para processar requisições OPTIONS corretamente
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_allow_origins,
+        allow_origins=[
+            "https://sistemafinanceiroback.onrender.com",
+            "http://localhost:8080",
+            "*",
+        ],
         allow_credentials=True,
         allow_methods=["*"],  # Inclui OPTIONS automaticamente
         allow_headers=["*"],
@@ -152,10 +150,7 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
         """
         origin = request.headers.get("origin")
         # Verifica se a origem está na lista de origens permitidas
-        if "*" in cors_allow_origins and origin:
-            allowed_origin = origin
-        else:
-            allowed_origin = origin if origin in cors_allow_origins else None
+        allowed_origin = origin if origin in settings.cors_origins else None
         
         headers = {
             "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
