@@ -63,7 +63,12 @@ class DatabaseManager:
         from app.infra.db.models import Base
 
         async with self._engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            # Usa checkfirst=True para evitar erro se tabelas já existirem
+            # run_sync passa a conexão síncrona como primeiro argumento
+            def create_tables(sync_conn):
+                Base.metadata.create_all(bind=sync_conn, checkfirst=True)
+            
+            await conn.run_sync(create_tables)
 
     async def close(self) -> None:
         """Fecha conexões com o banco."""
