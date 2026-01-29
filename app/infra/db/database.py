@@ -62,14 +62,17 @@ class DatabaseManager:
         """Inicializa o banco de dados (cria tabelas)."""
         from app.infra.db.models import Base
         from sqlalchemy.exc import OperationalError
+        import sqlite3
 
-        async with self._engine.begin() as conn:
+        # Usa connect() ao invés de begin() para evitar problemas com transações
+        # quando tabelas já existem
+        async with self._engine.connect() as conn:
             # Usa checkfirst=True para evitar erro se tabelas já existirem
             # run_sync passa a conexão síncrona como primeiro argumento
             def create_tables(sync_conn):
                 try:
                     Base.metadata.create_all(bind=sync_conn, checkfirst=True)
-                except OperationalError as e:
+                except (OperationalError, sqlite3.OperationalError) as e:
                     # Se a tabela já existe, ignora o erro
                     # Isso pode acontecer mesmo com checkfirst=True em alguns casos
                     error_msg = str(e).lower()
@@ -77,7 +80,26 @@ class DatabaseManager:
                         # Se não for erro de tabela existente, re-raise
                         raise
             
-            await conn.run_sync(create_tables)
+            try:
+                await conn.run_sync(create_tables)
+                await conn.commit()
+            except (OperationalError, sqlite3.OperationalError) as e:
+                # Tratamento adicional no nível async
+                error_msg = str(e).lower()
+                if "already exists" in error_msg or "duplicate" in error_msg:
+                    # Se for erro de tabela já existente, ignora silenciosamente
+                    # Não precisa fazer commit pois não houve mudanças
+                    pass
+                else:
+                    raise
+            except Exception as e:
+                # Captura qualquer outro erro e verifica se é relacionado a tabelas existentes
+                error_msg = str(e).lower()
+                if "already exists" in error_msg or "duplicate" in error_msg:
+                    # Se for erro de tabela já existente, ignora silenciosamente
+                    pass
+                else:
+                    raise
 
     async def close(self) -> None:
         """Fecha conexões com o banco."""
