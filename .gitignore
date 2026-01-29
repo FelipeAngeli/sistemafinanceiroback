@@ -60,3 +60,7 @@ coverage_report.txt
 
 # Editor history
 .history/
+
+# Scripts temporários/debug
+check_render_status.py
+deploy_details.json

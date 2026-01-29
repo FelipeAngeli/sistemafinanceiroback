@@ -61,12 +61,21 @@ class DatabaseManager:
     async def init(self) -> None:
         """Inicializa o banco de dados (cria tabelas)."""
         from app.infra.db.models import Base
+        from sqlalchemy.exc import OperationalError
 
         async with self._engine.begin() as conn:
             # Usa checkfirst=True para evitar erro se tabelas já existirem
             # run_sync passa a conexão síncrona como primeiro argumento
             def create_tables(sync_conn):
-                Base.metadata.create_all(bind=sync_conn, checkfirst=True)
+                try:
+                    Base.metadata.create_all(bind=sync_conn, checkfirst=True)
+                except OperationalError as e:
+                    # Se a tabela já existe, ignora o erro
+                    # Isso pode acontecer mesmo com checkfirst=True em alguns casos
+                    error_msg = str(e).lower()
+                    if "already exists" not in error_msg and "duplicate" not in error_msg:
+                        # Se não for erro de tabela existente, re-raise
+                        raise
             
             await conn.run_sync(create_tables)
 

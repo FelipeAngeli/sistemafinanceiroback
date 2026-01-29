@@ -1,13 +1,12 @@
 {
-    "venvPath": ".",
-    "venv": ".venv",
-    "pythonVersion": "3.11",
+    "pythonVersion": "3.14",
+    "pythonPath": "C:/Users/felipe.trebien/AppData/Local/Python/pythoncore-3.14-64/python.exe",
     "executionEnvironments": [
         {
             "root": ".",
-            "pythonVersion": "3.11",
+            "pythonVersion": "3.14",
             "extraPaths": [
-                ".venv/Lib/site-packages"
+                "C:/Users/felipe.trebien/AppData/Local/Python/pythoncore-3.14-64/Lib/site-packages"
             ],
             "pythonPlatform": "Windows"
         }
