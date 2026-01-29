@@ -41,6 +41,7 @@ class TestFullFlow:
         patient_repository,
         session_repository,
         financial_repository,
+        sample_user_id,
     ):
         """
         Testa o fluxo completo:
@@ -56,6 +57,7 @@ class TestFullFlow:
         create_patient_uc = CreatePatientUseCase(patient_repository)
 
         patient_input = CreatePatientInput(
+            user_id=sample_user_id,
             name="Ana Paula Santos",
             email="ana.paula@email.com",
             phone="(11) 98888-7777",
@@ -67,7 +69,7 @@ class TestFullFlow:
         patient_id = patient_output.id
 
         # Verificar persistência
-        saved_patient = await patient_repository.get_by_id(patient_id)
+        saved_patient = await patient_repository.get_by_id(user_id=sample_user_id, patient_id=patient_id)
         assert saved_patient is not None
         assert saved_patient.name == "Ana Paula Santos"
 
@@ -77,6 +79,7 @@ class TestFullFlow:
         create_session_uc = CreateSessionUseCase(session_repository, patient_repository)
 
         session_input = CreateSessionInput(
+            user_id=sample_user_id,
             patient_id=patient_id,
             date_time=datetime(2024, 12, 15, 14, 0),
             price=Decimal("200.00"),
@@ -96,6 +99,7 @@ class TestFullFlow:
         )
 
         status_input = UpdateSessionStatusInput(
+            user_id=sample_user_id,
             session_id=session_id,
             new_status=SessionStatus.REALIZADA,
             notes="Sessão realizada com sucesso.",
@@ -112,7 +116,7 @@ class TestFullFlow:
         financial_entry_id = status_output.financial_entry_id
 
         # Verificar lançamento no banco
-        pending = await financial_repository.list_pending()
+        pending = await financial_repository.list_pending(user_id=sample_user_id)
         assert len(pending) == 1
         assert pending[0].id == financial_entry_id
         assert pending[0].status == EntryStatus.PENDENTE
@@ -122,7 +126,7 @@ class TestFullFlow:
         # ============================================================
         # 4. Marcar Lançamento como PAGO
         # ============================================================
-        entry = await financial_repository.get_by_id(financial_entry_id)
+        entry = await financial_repository.get_by_id(user_id=sample_user_id, entry_id=financial_entry_id)
         assert entry is not None
 
         # Usar método da entidade
@@ -130,12 +134,12 @@ class TestFullFlow:
         await financial_repository.update(entry)
 
         # Verificar que foi atualizado
-        updated_entry = await financial_repository.get_by_id(financial_entry_id)
+        updated_entry = await financial_repository.get_by_id(user_id=sample_user_id, entry_id=financial_entry_id)
         assert updated_entry.status == EntryStatus.PAGO
         assert updated_entry.paid_at is not None
 
         # Lista de pendentes agora vazia
-        pending_after = await financial_repository.list_pending()
+        pending_after = await financial_repository.list_pending(user_id=sample_user_id)
         assert len(pending_after) == 0
 
         # ============================================================
@@ -144,6 +148,7 @@ class TestFullFlow:
         report_uc = FinancialReportUseCase(financial_repository)
 
         report_input = FinancialReportInput(
+            user_id=sample_user_id,
             start_date=date(2024, 12, 1),
             end_date=date(2024, 12, 31),
         )
@@ -168,6 +173,7 @@ class TestFullFlow:
         patient_repository,
         session_repository,
         financial_repository,
+        sample_user_id,
     ):
         """
         Testa que ao cancelar uma sessão, NÃO é gerado lançamento financeiro.
@@ -175,13 +181,14 @@ class TestFullFlow:
         # Criar paciente
         create_patient_uc = CreatePatientUseCase(patient_repository)
         patient_output = await create_patient_uc.execute(
-            CreatePatientInput(name="João Silva")
+            CreatePatientInput(user_id=sample_user_id, name="João Silva")
         )
 
         # Criar sessão
         create_session_uc = CreateSessionUseCase(session_repository, patient_repository)
         session_output = await create_session_uc.execute(
             CreateSessionInput(
+                user_id=sample_user_id,
                 patient_id=patient_output.id,
                 date_time=datetime(2024, 12, 20, 10, 0),
                 price=Decimal("180.00"),
@@ -194,6 +201,7 @@ class TestFullFlow:
         )
         status_output = await update_status_uc.execute(
             UpdateSessionStatusInput(
+                user_id=sample_user_id,
                 session_id=session_output.id,
                 new_status=SessionStatus.CANCELADA,
             )
@@ -204,7 +212,7 @@ class TestFullFlow:
         assert status_output.financial_entry_id is None
 
         # Sem lançamentos
-        pending = await financial_repository.list_pending()
+        pending = await financial_repository.list_pending(user_id=sample_user_id)
         assert len(pending) == 0
 
     @pytest.mark.asyncio
@@ -213,6 +221,7 @@ class TestFullFlow:
         patient_repository,
         session_repository,
         financial_repository,
+        sample_user_id,
     ):
         """
         Testa múltiplas sessões para o mesmo paciente.
@@ -220,7 +229,7 @@ class TestFullFlow:
         # Criar paciente
         create_patient_uc = CreatePatientUseCase(patient_repository)
         patient = await create_patient_uc.execute(
-            CreatePatientInput(name="Carlos Mendes", email="carlos@email.com")
+            CreatePatientInput(user_id=sample_user_id, name="Carlos Mendes", email="carlos@email.com")
         )
 
         # Criar e concluir 3 sessões
@@ -232,6 +241,7 @@ class TestFullFlow:
         for i, day in enumerate([1, 8, 15], 1):
             session = await create_session_uc.execute(
                 CreateSessionInput(
+                    user_id=sample_user_id,
                     patient_id=patient.id,
                     date_time=datetime(2024, 12, day, 14, 0),
                     price=Decimal("200.00"),
@@ -239,19 +249,21 @@ class TestFullFlow:
             )
             await update_status_uc.execute(
                 UpdateSessionStatusInput(
+                    user_id=sample_user_id,
                     session_id=session.id,
                     new_status=SessionStatus.REALIZADA,
                 )
             )
 
         # Verificar 3 lançamentos pendentes
-        pending = await financial_repository.list_pending()
+        pending = await financial_repository.list_pending(user_id=sample_user_id)
         assert len(pending) == 3
 
         # Relatório
         report_uc = FinancialReportUseCase(financial_repository)
         report = await report_uc.execute(
             FinancialReportInput(
+                user_id=sample_user_id,
                 start_date=date(2024, 12, 1),
                 end_date=date(2024, 12, 31),
             )

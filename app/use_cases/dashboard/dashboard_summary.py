@@ -34,6 +34,7 @@ from app.use_cases.financial.financial_report import (
 class DashboardSummaryInput:
     """Dados de entrada para resumo do dashboard."""
 
+    user_id: UUID
     start_date: date
     end_date: date
 
@@ -111,9 +112,9 @@ class DashboardSummaryUseCase:
 
         # Executar queries em paralelo para melhor performance
         financial_report_task = self._get_financial_report(input_data)
-        today_sessions_task = self._get_today_sessions(today_start, today_end)
-        recent_sessions_task = self._get_recent_sessions()
-        patients_summary_task = self._get_patients_summary()
+        today_sessions_task = self._get_today_sessions(input_data.user_id, today_start, today_end)
+        recent_sessions_task = self._get_recent_sessions(input_data.user_id)
+        patients_summary_task = self._get_patients_summary(input_data.user_id)
 
         # Aguardar todas as queries
         (
@@ -166,18 +167,20 @@ class DashboardSummaryUseCase:
     ) -> FinancialReportOutput:
         """Busca relatório financeiro do período."""
         report_input = FinancialReportInput(
+            user_id=input_data.user_id,
             start_date=input_data.start_date,
             end_date=input_data.end_date,
         )
         return await self._financial_report_uc.execute(report_input)
 
     async def _get_today_sessions(
-        self, today_start: datetime, today_end: datetime
+        self, user_id: UUID, today_start: datetime, today_end: datetime
     ) -> List[SessionSummary]:
-        """Busca sessões agendadas para hoje."""
+        """Busca sessões agendadas para hoje do usuário."""
         from app.domain.entities.session import SessionStatus
         
         sessions = await self._session_repo.list_all(
+            user_id=user_id,
             status=SessionStatus.AGENDADA.value,
             start_date=today_start.date(),
             end_date=today_end.date(),
@@ -197,9 +200,9 @@ class DashboardSummaryUseCase:
             for s in sessions
         ]
 
-    async def _get_recent_sessions(self) -> List[SessionSummary]:
-        """Busca últimas 10 sessões recentes."""
-        sessions = await self._session_repo.list_recent(limit=10)
+    async def _get_recent_sessions(self, user_id: UUID) -> List[SessionSummary]:
+        """Busca últimas 10 sessões recentes do usuário."""
+        sessions = await self._session_repo.list_recent(user_id=user_id, limit=10)
 
         return [
             SessionSummary(
@@ -214,18 +217,13 @@ class DashboardSummaryUseCase:
             for s in sessions
         ]
 
-    async def _get_patients_summary(self) -> PatientsSummary:
-        """Busca resumo de pacientes (total, ativos, inativos)."""
-        # Buscar todos os pacientes (ativos e inativos)
-        all_patients = await self._patient_repo.list_all(active_only=False)
-        active_patients = await self._patient_repo.list_all(active_only=True)
-
-        total = len(all_patients)
-        active = len(active_patients)
-        inactive = total - active
+    async def _get_patients_summary(self, user_id: UUID) -> PatientsSummary:
+        """Busca resumo de pacientes (total, ativos, inativos) do usuário."""
+        # Buscar estatísticas usando método otimizado
+        stats = await self._patient_repo.get_stats(user_id=user_id)
 
         return PatientsSummary(
-            total_patients=total,
-            active_patients=active,
-            inactive_patients=inactive,
+            total_patients=stats.total,
+            active_patients=stats.active,
+            inactive_patients=stats.inactive,
         )

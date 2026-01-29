@@ -10,12 +10,13 @@ class TestFinancialAPI:
     """Testes para /financial endpoints."""
 
     @pytest.fixture
-    async def setup_paid_session(self, client: AsyncClient) -> dict:
+    async def setup_paid_session(self, client: AsyncClient, auth_headers: dict) -> dict:
         """Cria paciente, sessão e conclui (gera lançamento)."""
         # Criar paciente
         patient_response = await client.post(
             "/patients",
             json={"name": "Paciente Financeiro"},
+            headers=auth_headers,
         )
         patient_id = patient_response.json()["id"]
 
@@ -27,6 +28,7 @@ class TestFinancialAPI:
                 "date_time": "2024-12-15T14:00:00",
                 "price": 200.00,
             },
+            headers=auth_headers,
         )
         session_id = session_response.json()["id"]
 
@@ -34,6 +36,7 @@ class TestFinancialAPI:
         status_response = await client.patch(
             f"/sessions/{session_id}/status",
             json={"new_status": "realizada"},
+            headers=auth_headers,
         )
 
         return {
@@ -44,7 +47,7 @@ class TestFinancialAPI:
 
     @pytest.mark.asyncio
     async def test_list_financial_entries(
-        self, client: AsyncClient, setup_paid_session: dict
+        self, client: AsyncClient, setup_paid_session: dict, auth_headers: dict
     ):
         """GET /financial/entries - deve listar lançamentos."""
         response = await client.get(
@@ -53,6 +56,7 @@ class TestFinancialAPI:
                 "start_date": "2024-12-01",
                 "end_date": "2024-12-31",
             },
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -66,7 +70,7 @@ class TestFinancialAPI:
 
     @pytest.mark.asyncio
     async def test_list_financial_entries_filter_pending(
-        self, client: AsyncClient, setup_paid_session: dict
+        self, client: AsyncClient, setup_paid_session: dict, auth_headers: dict
     ):
         """GET /financial/entries - deve filtrar por status pendente."""
         response = await client.get(
@@ -76,6 +80,7 @@ class TestFinancialAPI:
                 "end_date": "2024-12-31",
                 "status": "pendente",
             },
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -85,7 +90,7 @@ class TestFinancialAPI:
             assert entry["status"] == "pendente"
 
     @pytest.mark.asyncio
-    async def test_financial_report_empty_period(self, client: AsyncClient):
+    async def test_financial_report_empty_period(self, client: AsyncClient, auth_headers: dict):
         """GET /financial/entries - período sem lançamentos."""
         response = await client.get(
             "/financial/entries",
@@ -93,6 +98,7 @@ class TestFinancialAPI:
                 "start_date": "2020-01-01",
                 "end_date": "2020-01-31",
             },
+            headers=auth_headers,
         )
 
         assert response.status_code == 200
@@ -101,8 +107,20 @@ class TestFinancialAPI:
         assert Decimal(data["total_amount"]) == Decimal("0")
 
     @pytest.mark.asyncio
-    async def test_financial_entries_requires_dates(self, client: AsyncClient):
+    async def test_financial_entries_requires_dates(self, client: AsyncClient, auth_headers: dict):
         """GET /financial/entries - deve exigir datas."""
-        response = await client.get("/financial/entries")
+        response = await client.get("/financial/entries", headers=auth_headers)
 
         assert response.status_code == 422  # Validation error
+
+    @pytest.mark.asyncio
+    async def test_financial_requires_authentication(self, client: AsyncClient):
+        """Testa que endpoints financeiros requerem autenticação."""
+        response = await client.get(
+            "/financial/entries",
+            params={
+                "start_date": "2024-01-01",
+                "end_date": "2024-01-31",
+            },
+        )
+        assert response.status_code == 401

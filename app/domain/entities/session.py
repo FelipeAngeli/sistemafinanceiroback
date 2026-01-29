@@ -4,7 +4,7 @@ Representa uma sessão de atendimento psicológico.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
@@ -26,6 +26,7 @@ class SessionStatus(str, Enum):
 class Session:
     """Entidade Sessão."""
 
+    user_id: UUID
     patient_id: UUID
     date_time: datetime
     price: Decimal
@@ -33,7 +34,7 @@ class Session:
     status: SessionStatus = SessionStatus.AGENDADA
     notes: Optional[str] = None
     id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: Optional[datetime] = None
 
     def __post_init__(self) -> None:
@@ -87,7 +88,7 @@ class Session:
                 f"Sessão com status '{self.status.value}' não pode ser marcada como realizada."
             )
         self.status = SessionStatus.REALIZADA
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def mark_as_missed(self) -> None:
         """Marca sessão como faltou (paciente não compareceu)."""
@@ -96,7 +97,7 @@ class Session:
                 f"Sessão com status '{self.status.value}' não pode ser marcada como faltou."
             )
         self.status = SessionStatus.FALTOU
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def cancel(self) -> None:
         """Cancela a sessão."""
@@ -105,18 +106,21 @@ class Session:
                 f"Sessão com status '{self.status.value}' não pode ser cancelada."
             )
         self.status = SessionStatus.CANCELADA
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def reschedule(self, new_date_time: datetime) -> None:
         """Reagenda a sessão para nova data/hora."""
         if self.status != SessionStatus.AGENDADA:
             raise BusinessRuleError("Apenas sessões agendadas podem ser reagendadas.")
         # Valida que a nova data não seja muito antiga (mais de 1 ano no passado)
-        one_year_ago = datetime.utcnow().replace(year=datetime.utcnow().year - 1)
+        now = datetime.now(UTC)
+        one_year_ago = now.replace(year=now.year - 1)
+        if new_date_time.tzinfo is None:
+            new_date_time = new_date_time.replace(tzinfo=UTC)
         if new_date_time < one_year_ago:
             raise ValidationError("Não é possível agendar sessões com mais de 1 ano de antecedência.")
         self.date_time = new_date_time
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def is_scheduled(self) -> bool:
         """Verifica se a sessão está agendada."""

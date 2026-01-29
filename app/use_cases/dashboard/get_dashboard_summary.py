@@ -5,6 +5,7 @@ Agrega informações financeiras, de sessões e pacientes para o dashboard.
 
 from dataclasses import dataclass
 from datetime import date
+from uuid import UUID
 
 from app.domain.repositories.dashboard_repository import DashboardRepository
 from app.interfaces.http.schemas.dashboard_schemas import (
@@ -21,6 +22,7 @@ from app.interfaces.http.schemas.dashboard_schemas import (
 class GetDashboardSummaryInput:
     """Input para o resumo do dashboard."""
 
+    user_id: UUID
     start_date: date
     end_date: date
 
@@ -37,14 +39,18 @@ class GetDashboardSummaryUseCase:
         """Executa a busca de dados agregados."""
         
         financial_dto = await self._repository.get_financial_stats(
-            input_data.start_date, input_data.end_date
+            user_id=input_data.user_id,
+            start_date=input_data.start_date,
+            end_date=input_data.end_date,
         )
         
         sessions_dto = await self._repository.get_session_stats(
-            input_data.start_date, input_data.end_date
+            user_id=input_data.user_id,
+            start_date=input_data.start_date,
+            end_date=input_data.end_date,
         )
         
-        patients_dto = await self._repository.get_patient_stats()
+        patients_dto = await self._repository.get_patient_stats(user_id=input_data.user_id)
 
         # Convert DTOs to Response Schemas
         financial = DashboardFinancialStats(

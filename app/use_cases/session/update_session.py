@@ -4,7 +4,7 @@ Responsável por atualizar os dados de uma sessão existente.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -19,6 +19,7 @@ from app.domain.repositories.session_repository import SessionRepository
 class UpdateSessionInput:
     """Dados de entrada para atualização de sessão."""
 
+    user_id: UUID
     session_id: UUID
     patient_id: Optional[UUID] = None
     date_time: Optional[datetime] = None
@@ -61,14 +62,20 @@ class UpdateSessionUseCase:
 
     async def execute(self, input_data: UpdateSessionInput) -> UpdateSessionOutput:
         """Executa a atualização da sessão."""
-        # 1. Buscar sessão
-        session = await self._session_repository.get_by_id(input_data.session_id)
+        # 1. Buscar sessão (valida propriedade)
+        session = await self._session_repository.get_by_id(
+            user_id=input_data.user_id,
+            session_id=input_data.session_id
+        )
         if not session:
             raise NotFoundError(resource="Sessão", resource_id=str(input_data.session_id))
 
-        # 2. Validar paciente se foi alterado
+        # 2. Validar paciente se foi alterado (deve pertencer ao mesmo usuário)
         if input_data.patient_id and input_data.patient_id != session.patient_id:
-            patient = await self._patient_repository.get_by_id(input_data.patient_id)
+            patient = await self._patient_repository.get_by_id(
+                user_id=input_data.user_id,
+                patient_id=input_data.patient_id
+            )
             if not patient:
                 raise ValidationError(f"Paciente com ID {input_data.patient_id} não encontrado.", field="patient_id")
             session.patient_id = input_data.patient_id
@@ -85,15 +92,15 @@ class UpdateSessionUseCase:
                 # Mas se mudou a data, logicamente é um reagendamento se estiver agendada.
                 # Se já foi concluída, pode ser uma correção de registro.
                 session.date_time = input_data.date_time
-                session.updated_at = datetime.utcnow()
+                session.updated_at = datetime.now(UTC)
 
         if input_data.price is not None:
             session.price = input_data.price
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(UTC)
 
         if input_data.notes is not None:
             session.notes = input_data.notes
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(UTC)
 
         # 4. Persistir
         # O repositório deve lidar com a persistência

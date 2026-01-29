@@ -18,6 +18,7 @@ from app.domain.repositories.session_repository import SessionRepository
 class ListSessionsInput:
     """Dados de entrada para listagem de sessões."""
 
+    user_id: UUID
     patient_id: Optional[UUID] = None
     status: Optional[str] = None
     start_date: Optional[date] = None
@@ -61,6 +62,7 @@ class ListSessionsUseCase:
     async def execute(self, input_data: ListSessionsInput) -> ListSessionsOutput:
         """Executa a listagem de sessões."""
         sessions = await self._repository.list_all(
+            user_id=input_data.user_id,
             patient_id=input_data.patient_id,
             status=input_data.status,
             start_date=input_data.start_date,

@@ -17,6 +17,7 @@ class FinancialEntryMapper:
             id=str(entity.id),
             session_id=str(entity.session_id),
             patient_id=str(entity.patient_id),
+            user_id=str(entity.user_id),
             amount=entity.amount,
             entry_date=entity.entry_date,
             description=entity.description,
@@ -32,6 +33,7 @@ class FinancialEntryMapper:
         object.__setattr__(entry, "id", UUID(model.id))
         object.__setattr__(entry, "session_id", UUID(model.session_id))
         object.__setattr__(entry, "patient_id", UUID(model.patient_id))
+        object.__setattr__(entry, "user_id", UUID(model.user_id))
         object.__setattr__(entry, "amount", Decimal(str(model.amount)))
         object.__setattr__(entry, "entry_date", model.entry_date)
         object.__setattr__(entry, "description", model.description)
@@ -45,6 +47,7 @@ class FinancialEntryMapper:
         model: FinancialEntryModel, entity: FinancialEntry
     ) -> FinancialEntryModel:
         """Atualiza model existente com dados da entidade."""
+        model.user_id = str(entity.user_id)
         model.amount = entity.amount
         model.entry_date = entity.entry_date
         model.description = entity.description

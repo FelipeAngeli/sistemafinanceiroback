@@ -1,6 +1,6 @@
 """Testes para SessionMapper."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -12,8 +12,9 @@ from app.infra.db.models.session_model import SessionModel
 def _make_session(status: SessionStatus = SessionStatus.AGENDADA) -> Session:
     return Session(
         id=uuid4(),
+        user_id=uuid4(),
         patient_id=uuid4(),
-        date_time=datetime.utcnow(),
+        date_time=datetime.now(UTC),
         price=Decimal("150.50"),
         duration_minutes=45,
         status=status,
@@ -38,14 +39,15 @@ def test_to_model_maps_fields():
 def test_to_entity_converts_decimal_and_status():
     model = SessionModel(
         id=str(uuid4()),
+        user_id=str(uuid4()),
         patient_id=str(uuid4()),
-        date_time=datetime.utcnow(),
+        date_time=datetime.now(UTC),
         duration_minutes=60,
         price=Decimal("200.00"),
         status=SessionStatus.REALIZADA.value,
         notes="Finalizada",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
     entity = SessionMapper.to_entity(model)
@@ -60,14 +62,15 @@ def test_to_entity_converts_decimal_and_status():
 def test_update_model_writes_changes():
     model = SessionModel(
         id=str(uuid4()),
+        user_id=str(uuid4()),
         patient_id=str(uuid4()),
-        date_time=datetime.utcnow(),
+        date_time=datetime.now(UTC),
         duration_minutes=60,
         price=Decimal("100"),
         status=SessionStatus.AGENDADA.value,
         notes="",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     entity = _make_session(status=SessionStatus.FALTOU)
 

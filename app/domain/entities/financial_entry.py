@@ -4,7 +4,7 @@ Representa um lançamento financeiro gerado a partir de uma sessão concluída.
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
@@ -26,12 +26,13 @@ class FinancialEntry:
 
     session_id: UUID
     patient_id: UUID
+    user_id: UUID
     amount: Decimal
     entry_date: date
     description: str = ""
     status: EntryStatus = EntryStatus.PENDENTE
     id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     paid_at: Optional[datetime] = None
 
     def __post_init__(self) -> None:
@@ -87,7 +88,7 @@ class FinancialEntry:
         if self.is_paid():
             raise BusinessRuleError("Lançamento já está pago.")
         self.status = EntryStatus.PAGO
-        self.paid_at = datetime.utcnow()
+        self.paid_at = datetime.now(UTC)
 
     def mark_as_pending(self) -> None:
         """Marca lançamento como pendente novamente (reversão de pagamento)."""
@@ -123,6 +124,7 @@ class FinancialEntry:
         cls,
         session_id: UUID,
         patient_id: UUID,
+        user_id: UUID,
         amount: Decimal,
         session_date: datetime,
         description: str = "",
@@ -131,6 +133,7 @@ class FinancialEntry:
         return cls(
             session_id=session_id,
             patient_id=patient_id,
+            user_id=user_id,
             amount=amount,
             entry_date=session_date.date(),
             description=description or "Sessão de atendimento",

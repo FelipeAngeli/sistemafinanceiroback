@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query
 
 from app.domain.entities.financial_entry import EntryStatus
 from app.interfaces.http.dependencies import FinancialReportUC
+from app.interfaces.http.dependencies.auth import CurrentUser
 from app.interfaces.http.schemas.financial_schemas import (
     FinancialEntryResponse,
     FinancialReportResponse,
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/financial", tags=["Financeiro"])
     ),
 )
 async def list_financial_entries(
+    current_user: CurrentUser,
     use_case: FinancialReportUC,
     start_date: date = Query(
         ...,
@@ -43,8 +45,13 @@ async def list_financial_entries(
         examples=[["pendente"]],
     ),
 ) -> FinancialReportResponse:
-    """Lista lançamentos financeiros com relatório consolidado."""
+    """Lista lançamentos financeiros do usuário autenticado com relatório consolidado.
+    
+    **Autenticação:**
+    Requer token JWT válido. Retorna apenas lançamentos do usuário autenticado.
+    """
     input_data = FinancialReportInput(
+        user_id=current_user.id,
         start_date=start_date,
         end_date=end_date,
         status_filter=status,

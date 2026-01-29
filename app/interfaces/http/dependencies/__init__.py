@@ -13,11 +13,13 @@ from app.infra.repositories.patient_repository_impl import SqlAlchemyPatientRepo
 from app.infra.repositories.session_repository_impl import SqlAlchemySessionRepository
 from app.infra.repositories.financial_repository_impl import SqlAlchemyFinancialEntryRepository
 from app.infra.repositories.dashboard_repository_impl import SqlAlchemyDashboardRepository
+from app.infra.repositories.user_repository_impl import SqlAlchemyUserRepository
 
 from app.domain.repositories.patient_repository import PatientRepository
 from app.domain.repositories.session_repository import SessionRepository
 from app.domain.repositories.financial_repository import FinancialEntryRepository
 from app.domain.repositories.dashboard_repository import DashboardRepository
+from app.domain.repositories.user_repository import UserRepository
 from app.use_cases.patient.create_patient import CreatePatientUseCase
 from app.use_cases.patient.list_patients import ListPatientsUseCase
 from app.use_cases.patient.get_patient_summary import GetPatientSummaryUseCase
@@ -28,6 +30,8 @@ from app.use_cases.session.update_session import UpdateSessionUseCase
 from app.use_cases.session.update_session_status import UpdateSessionStatusUseCase
 from app.use_cases.financial.financial_report import FinancialReportUseCase
 from app.use_cases.dashboard.dashboard_summary import DashboardSummaryUseCase
+from app.use_cases.auth.register_user import RegisterUserUseCase
+from app.use_cases.auth.login_user import LoginUserUseCase
 
 
 # ============================================================
@@ -68,10 +72,16 @@ async def get_dashboard_repository(session: DbSession) -> DashboardRepository:
     return SqlAlchemyDashboardRepository(session)
 
 
+async def get_user_repository(session: DbSession) -> UserRepository:
+    """Fornece repositório de usuários."""
+    return SqlAlchemyUserRepository(session)
+
+
 PatientRepo = Annotated[PatientRepository, Depends(get_patient_repository)]
 SessionRepo = Annotated[SessionRepository, Depends(get_session_repository)]
 FinancialRepo = Annotated[FinancialEntryRepository, Depends(get_financial_repository)]
 DashboardRepo = Annotated[DashboardRepository, Depends(get_dashboard_repository)]
+UserRepo = Annotated[UserRepository, Depends(get_user_repository)]
 
 
 # ============================================================
@@ -160,6 +170,16 @@ async def get_dashboard_summary_use_case(
     )
 
 
+async def get_register_user_use_case(repo: UserRepo) -> RegisterUserUseCase:
+    """Fornece caso de uso de registro de usuário."""
+    return RegisterUserUseCase(user_repository=repo)
+
+
+async def get_login_user_use_case(repo: UserRepo) -> LoginUserUseCase:
+    """Fornece caso de uso de login de usuário."""
+    return LoginUserUseCase(user_repository=repo)
+
+
 # Type aliases para injeção nos endpoints
 CreatePatientUC = Annotated[CreatePatientUseCase, Depends(get_create_patient_use_case)]
 ListPatientsUC = Annotated[ListPatientsUseCase, Depends(get_list_patients_use_case)]
@@ -171,3 +191,5 @@ UpdateSessionUC = Annotated[UpdateSessionUseCase, Depends(get_update_session_use
 UpdateSessionStatusUC = Annotated[UpdateSessionStatusUseCase, Depends(get_update_session_status_use_case)]
 FinancialReportUC = Annotated[FinancialReportUseCase, Depends(get_financial_report_use_case)]
 DashboardSummaryUC = Annotated[DashboardSummaryUseCase, Depends(get_dashboard_summary_use_case)]
+RegisterUserUC = Annotated[RegisterUserUseCase, Depends(get_register_user_use_case)]
+LoginUserUC = Annotated[LoginUserUseCase, Depends(get_login_user_use_case)]

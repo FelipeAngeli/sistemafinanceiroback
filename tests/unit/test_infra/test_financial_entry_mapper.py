@@ -1,6 +1,6 @@
 """Testes para FinancialEntryMapper."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -14,6 +14,7 @@ def _make_entry(status: EntryStatus = EntryStatus.PENDENTE) -> FinancialEntry:
         id=uuid4(),
         session_id=uuid4(),
         patient_id=uuid4(),
+        user_id=uuid4(),
         amount=Decimal("199.90"),
         entry_date=date.today(),
         description="Descrição",
@@ -41,12 +42,13 @@ def test_to_entity_restores_domain_values():
         id=str(uuid4()),
         session_id=str(uuid4()),
         patient_id=str(uuid4()),
+        user_id=str(uuid4()),
         amount=Decimal("250.00"),
         entry_date=date.today(),
         description="Teste",
         status=EntryStatus.PAGO.value,
-        created_at=datetime.utcnow(),
-        paid_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        paid_at=datetime.now(UTC),
     )
 
     entity = FinancialEntryMapper.to_entity(model)
@@ -64,11 +66,12 @@ def test_update_model_writes_changes():
         id=str(uuid4()),
         session_id=str(uuid4()),
         patient_id=str(uuid4()),
+        user_id=str(uuid4()),
         amount=Decimal("100.00"),
         entry_date=date.today(),
         description="",
         status=EntryStatus.PENDENTE.value,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
         paid_at=None,
     )
     entry = _make_entry()

@@ -102,9 +102,16 @@ async def financial_repository(db_session: AsyncSession) -> SqlAlchemyFinancialE
 # ============================================================
 
 @pytest.fixture
-def sample_patient() -> Patient:
+def sample_user_id() -> UUID:
+    """ID de usuário de exemplo."""
+    return uuid4()
+
+
+@pytest.fixture
+def sample_patient(sample_user_id: UUID) -> Patient:
     """Paciente de exemplo."""
     return Patient(
+        user_id=sample_user_id,
         name="Maria Silva",
         email="maria@email.com",
         phone="(11) 99999-9999",
@@ -118,9 +125,10 @@ def sample_patient_id() -> UUID:
 
 
 @pytest.fixture
-def sample_session(sample_patient_id: UUID) -> Session:
+def sample_session(sample_user_id: UUID, sample_patient_id: UUID) -> Session:
     """Sessão de exemplo (AGENDADA)."""
     return Session(
+        user_id=sample_user_id,
         patient_id=sample_patient_id,
         date_time=datetime(2024, 12, 15, 14, 0),
         price=Decimal("200.00"),
@@ -129,11 +137,12 @@ def sample_session(sample_patient_id: UUID) -> Session:
 
 
 @pytest.fixture
-def sample_financial_entry(sample_patient_id: UUID) -> FinancialEntry:
+def sample_financial_entry(sample_user_id: UUID, sample_patient_id: UUID) -> FinancialEntry:
     """Lançamento financeiro de exemplo."""
     return FinancialEntry(
         session_id=uuid4(),
         patient_id=sample_patient_id,
+        user_id=sample_user_id,
         amount=Decimal("200.00"),
         entry_date=datetime(2024, 12, 15).date(),
     )

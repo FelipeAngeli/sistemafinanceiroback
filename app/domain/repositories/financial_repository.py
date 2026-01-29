@@ -32,42 +32,48 @@ class FinancialEntryRepository(ABC):
         ...
 
     @abstractmethod
-    async def get_by_id(self, entry_id: UUID) -> Optional[FinancialEntry]:
-        """Busca lançamento por ID.
+    async def get_by_id(self, user_id: UUID, entry_id: UUID) -> Optional[FinancialEntry]:
+        """Busca lançamento por ID, validando que pertence ao usuário.
 
         Args:
+            user_id: UUID do usuário (dono do lançamento).
             entry_id: UUID do lançamento.
 
         Returns:
-            FinancialEntry se encontrado, None caso contrário.
+            FinancialEntry se encontrado e pertencer ao usuário, None caso contrário.
         """
         ...
 
     @abstractmethod
     async def list_by_period(
         self,
+        user_id: UUID,
         start_date: date,
         end_date: date,
         status_filter: Optional[List[EntryStatus]] = None,
     ) -> List[FinancialEntry]:
-        """Lista lançamentos em um período, opcionalmente filtrados por status.
+        """Lista lançamentos do usuário em um período, opcionalmente filtrados por status.
 
         Args:
+            user_id: UUID do usuário (obrigatório).
             start_date: Data inicial do período.
             end_date: Data final do período.
             status_filter: Lista de status para filtrar (None = todos).
 
         Returns:
-            Lista de lançamentos no período.
+            Lista de lançamentos do usuário no período.
         """
         ...
 
     @abstractmethod
-    async def list_pending(self) -> List[FinancialEntry]:
-        """Lista todos os lançamentos pendentes.
+    async def list_pending(self, user_id: UUID) -> List[FinancialEntry]:
+        """Lista todos os lançamentos pendentes do usuário.
+
+        Args:
+            user_id: UUID do usuário.
 
         Returns:
-            Lista de lançamentos com status PENDENTE.
+            Lista de lançamentos do usuário com status PENDENTE.
         """
         ...
 

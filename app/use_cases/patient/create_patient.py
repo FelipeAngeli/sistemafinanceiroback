@@ -15,6 +15,7 @@ from app.domain.repositories.patient_repository import PatientRepository
 class CreatePatientInput:
     """Dados de entrada para criação de paciente."""
 
+    user_id: UUID
     name: str
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -50,6 +51,7 @@ class CreatePatientUseCase:
         """Executa a criação do paciente."""
         # Criar entidade (validações ocorrem no __post_init__)
         patient = Patient(
+            user_id=input_data.user_id,
             name=input_data.name,
             email=input_data.email,
             phone=input_data.phone,

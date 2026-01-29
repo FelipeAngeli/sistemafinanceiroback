@@ -21,6 +21,7 @@ class PatientMapper:
         """
         return PatientModel(
             id=str(entity.id),
+            user_id=str(entity.user_id),
             name=entity.name,
             email=entity.email,
             phone=entity.phone,
@@ -46,6 +47,7 @@ class PatientMapper:
         """
         patient = object.__new__(Patient)
         object.__setattr__(patient, "id", UUID(model.id))
+        object.__setattr__(patient, "user_id", UUID(model.user_id))
         object.__setattr__(patient, "name", model.name)
         object.__setattr__(patient, "email", model.email)
         object.__setattr__(patient, "phone", model.phone)
@@ -66,6 +68,7 @@ class PatientMapper:
         Returns:
             PatientModel atualizado.
         """
+        model.user_id = str(entity.user_id)
         model.name = entity.name
         model.email = entity.email
         model.phone = entity.phone

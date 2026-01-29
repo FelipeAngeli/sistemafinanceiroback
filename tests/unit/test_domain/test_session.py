@@ -2,7 +2,7 @@
 Testes para entidade Session.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -18,8 +18,9 @@ class TestSession:
     def test_create_session_with_scheduled_status(self):
         """Deve criar sessão com status agendado e validar dados."""
         session = Session(
+            user_id=uuid4(),
             patient_id=uuid4(),
-            date_time=datetime.utcnow(),
+            date_time=datetime.now(UTC),
             price=Decimal("200.00"),
             duration_minutes=50,
             notes="Primeira sessão",
@@ -34,8 +35,9 @@ class TestSession:
         """Não deve aceitar preço negativo."""
         with pytest.raises(ValidationError):
             Session(
+                user_id=uuid4(),
                 patient_id=uuid4(),
-                date_time=datetime.utcnow(),
+                date_time=datetime.now(UTC),
                 price=Decimal("-1"),
             )
 
@@ -43,8 +45,9 @@ class TestSession:
         """Não deve aceitar duração menor/igual a zero."""
         with pytest.raises(ValidationError):
             Session(
+                user_id=uuid4(),
                 patient_id=uuid4(),
-                date_time=datetime.utcnow(),
+                date_time=datetime.now(UTC),
                 price=Decimal("100"),
                 duration_minutes=0,
             )
@@ -52,8 +55,9 @@ class TestSession:
     def test_complete_session(self):
         """Deve concluir sessão corretamente."""
         session = Session(
+            user_id=uuid4(),
             patient_id=uuid4(),
-            date_time=datetime.utcnow(),
+            date_time=datetime.now(UTC),
             price=Decimal("200"),
         )
 
@@ -64,8 +68,9 @@ class TestSession:
     def test_mark_as_missed_with_invalid_status(self):
         """Não deve permitir marcar como faltou se não estiver agendada."""
         session = Session(
+            user_id=uuid4(),
             patient_id=uuid4(),
-            date_time=datetime.utcnow(),
+            date_time=datetime.now(UTC),
             price=Decimal("200"),
             status=SessionStatus.CANCELADA,
         )
@@ -76,8 +81,9 @@ class TestSession:
     def test_cancel_session(self):
         """Deve cancelar sessão corretamente."""
         session = Session(
+            user_id=uuid4(),
             patient_id=uuid4(),
-            date_time=datetime.utcnow(),
+            date_time=datetime.now(UTC),
             price=Decimal("200"),
         )
 
@@ -88,15 +94,16 @@ class TestSession:
     def test_reschedule_session(self):
         """Deve reagendar sessão apenas se agendada."""
         session = Session(
+            user_id=uuid4(),
             patient_id=uuid4(),
-            date_time=datetime.utcnow(),
+            date_time=datetime.now(UTC),
             price=Decimal("150"),
         )
 
-        new_date = datetime.utcnow() + timedelta(days=3)
+        new_date = datetime.now(UTC) + timedelta(days=3)
         session.reschedule(new_date)
         assert session.date_time == new_date
 
         session.status = SessionStatus.REALIZADA
         with pytest.raises(BusinessRuleError):
-            session.reschedule(datetime.utcnow())
+            session.reschedule(datetime.now(UTC))

@@ -20,6 +20,7 @@ from app.domain.repositories.session_repository import SessionRepository
 class CreateSessionInput:
     """Dados de entrada para criação de sessão."""
 
+    user_id: UUID
     patient_id: UUID
     date_time: datetime
     price: Decimal
@@ -62,8 +63,11 @@ class CreateSessionUseCase:
 
     async def execute(self, input_data: CreateSessionInput) -> CreateSessionOutput:
         """Executa a criação da sessão."""
-        # Verificar se paciente existe e está ativo
-        patient = await self._patient_repository.get_by_id(input_data.patient_id)
+        # Verificar se paciente existe, está ativo e pertence ao usuário
+        patient = await self._patient_repository.get_by_id(
+            user_id=input_data.user_id,
+            patient_id=input_data.patient_id
+        )
         if not patient:
             raise EntityNotFoundError("Paciente", str(input_data.patient_id))
         if not patient.is_active():
@@ -72,6 +76,7 @@ class CreateSessionUseCase:
 
         # Criar sessão (sempre inicia como AGENDADA)
         session = Session(
+            user_id=input_data.user_id,
             patient_id=input_data.patient_id,
             date_time=input_data.date_time,
             price=input_data.price,

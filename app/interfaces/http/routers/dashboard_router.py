@@ -5,6 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from app.interfaces.http.dependencies import DashboardSummaryUC
+from app.interfaces.http.dependencies.auth import CurrentUser
 from app.interfaces.http.schemas.dashboard_schemas import (
     DashboardSummaryResponse,
     FinancialEntrySummarySchema,
@@ -28,6 +29,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
     ),
 )
 async def get_dashboard_summary(
+    current_user: CurrentUser,
     use_case: DashboardSummaryUC,
     start_date: date = Query(
         ...,
@@ -40,7 +42,10 @@ async def get_dashboard_summary(
         examples=["2024-01-31"],
     ),
 ) -> DashboardSummaryResponse:
-    """Retorna resumo consolidado do dashboard.
+    """Retorna resumo consolidado do dashboard do usuário autenticado.
+    
+    **Autenticação:**
+    Requer token JWT válido. Retorna apenas dados do usuário autenticado.
     
     Validações:
     - Formato das datas (YYYY-MM-DD) - validado automaticamente pelo FastAPI
@@ -51,10 +56,9 @@ async def get_dashboard_summary(
     - Queries executadas em paralelo
     - Limite de 100 entradas financeiras
     - Limite de 100 sessões de hoje
-    
-    Nota: Autenticação deve ser adicionada quando o sistema de auth for implementado.
     """
     input_data = DashboardSummaryInput(
+        user_id=current_user.id,
         start_date=start_date,
         end_date=end_date,
     )

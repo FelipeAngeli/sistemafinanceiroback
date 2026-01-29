@@ -15,12 +15,12 @@ from app.core.logger import get_logger
 from app.infra.db.database import get_database_manager
 from app.interfaces.http.exception_handlers import register_exception_handlers
 from app.interfaces.http.routers import (
+    auth_router,
     dashboard_router,
     patient_router,
     session_router,
     financial_router,
     health_router,
-    dashboard_router,
 )
 
 logger = get_logger(__name__)
@@ -175,6 +175,7 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
 
     # Registrar routers
     app.include_router(health_router)
+    app.include_router(auth_router)  # Autenticação (sem proteção)
     app.include_router(patient_router)
     app.include_router(session_router)
     app.include_router(financial_router)

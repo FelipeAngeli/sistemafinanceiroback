@@ -1,6 +1,6 @@
 """Testes para PatientMapper."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from app.domain.entities.patient import Patient
@@ -12,8 +12,9 @@ def _make_patient() -> Patient:
     return Patient(
         id=uuid4(),
         name="Maria",
+        user_id=uuid4(),
         email="maria@example.com",
-        phone="123",
+        phone="(11) 99999-9999",
         observation="obs",
         active=False,
     )
@@ -36,13 +37,14 @@ def test_to_model_maps_all_fields():
 def test_to_entity_maps_back_to_domain():
     model = PatientModel(
         id=str(uuid4()),
+        user_id=str(uuid4()),
         name="José",
         email="jose@example.com",
-        phone="999",
+        phone="(11) 88888-8888",
         observation="anotação",
         active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
     entity = PatientMapper.to_entity(model)
@@ -60,19 +62,21 @@ def test_to_entity_maps_back_to_domain():
 def test_update_model_applies_entity_changes():
     model = PatientModel(
         id=str(uuid4()),
+        user_id=str(uuid4()),
         name="Original",
         email="original@example.com",
-        phone="111",
+        phone="(11) 77777-7777",
         observation="",
         active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
     entity = Patient(
         id=uuid4(),
         name="Atualizado",
+        user_id=uuid4(),
         email="new@example.com",
-        phone="222",
+        phone="(11) 66666-6666",
         observation="obs",
         active=False,
     )

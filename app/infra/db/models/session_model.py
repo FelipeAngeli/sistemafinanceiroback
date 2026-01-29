@@ -1,9 +1,10 @@
 """Model SQLAlchemy para Session."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
+from app.infra.db.models import PatientModel, UserModel
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +21,12 @@ class SessionModel(Base):
         primary_key=True,
         default=lambda: str(uuid4()),
     )
+    user_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
     patient_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("patients.id"),
@@ -34,11 +41,14 @@ class SessionModel(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Relationships (opcional, para queries mais fáceis)
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", backref="sessions", lazy="selectin"
+    )
     patient: Mapped["PatientModel"] = relationship(
         "PatientModel", backref="sessions", lazy="selectin"
     )

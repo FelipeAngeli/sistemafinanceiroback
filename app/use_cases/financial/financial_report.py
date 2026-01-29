@@ -18,6 +18,7 @@ from app.domain.repositories.financial_repository import FinancialEntryRepositor
 class FinancialReportInput:
     """Dados de entrada para relatório financeiro."""
 
+    user_id: UUID
     start_date: date
     end_date: date
     status_filter: Optional[List[EntryStatus]] = None
@@ -69,6 +70,7 @@ class FinancialReportUseCase:
         
         # Buscar lançamentos no período
         entries = await self._repository.list_by_period(
+            user_id=input_data.user_id,
             start_date=input_data.start_date,
             end_date=input_data.end_date,
             status_filter=input_data.status_filter,

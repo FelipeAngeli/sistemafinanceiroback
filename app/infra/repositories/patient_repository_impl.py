@@ -22,13 +22,13 @@ class SqlAlchemyPatientRepository(PatientRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_stats(self) -> PatientStats:
-        """Retorna estatísticas gerais dos pacientes."""
+    async def get_stats(self, user_id: UUID) -> PatientStats:
+        """Retorna estatísticas gerais dos pacientes do usuário."""
         stmt = select(
             func.count(PatientModel.id).label("total"),
             func.sum(case((PatientModel.active == True, 1), else_=0)).label("active"),
             func.sum(case((PatientModel.active == False, 1), else_=0)).label("inactive"),
-        )
+        ).where(PatientModel.user_id == str(user_id))
         
         result = await self._session.execute(stmt)
         row = result.one()
@@ -42,6 +42,11 @@ class SqlAlchemyPatientRepository(PatientRepository):
     async def create(self, patient: Patient) -> Patient:
         """Persiste um novo paciente."""
         try:
+            # Validar que user_id está definido
+            if not patient.user_id:
+                from app.core.exceptions import ValidationError
+                raise ValidationError("user_id é obrigatório para criar paciente.")
+            
             model = PatientMapper.to_model(patient)
             self._session.add(model)
             await self._session.commit()
@@ -51,16 +56,19 @@ class SqlAlchemyPatientRepository(PatientRepository):
             await self._session.rollback()
             raise
 
-    async def get_by_id(self, patient_id: UUID) -> Optional[Patient]:
-        """Busca paciente por ID."""
-        stmt = select(PatientModel).where(PatientModel.id == str(patient_id))
+    async def get_by_id(self, user_id: UUID, patient_id: UUID) -> Optional[Patient]:
+        """Busca paciente por ID, validando que pertence ao usuário."""
+        stmt = select(PatientModel).where(
+            PatientModel.id == str(patient_id),
+            PatientModel.user_id == str(user_id),
+        )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return PatientMapper.to_entity(model) if model else None
 
-    async def list_all(self, active_only: bool = True) -> List[Patient]:
-        """Lista todos os pacientes."""
-        stmt = select(PatientModel).order_by(PatientModel.name)
+    async def list_all(self, user_id: UUID, active_only: bool = True) -> List[Patient]:
+        """Lista todos os pacientes do usuário."""
+        stmt = select(PatientModel).where(PatientModel.user_id == str(user_id)).order_by(PatientModel.name)
         if active_only:
             stmt = stmt.where(PatientModel.active == True)
         result = await self._session.execute(stmt)
@@ -68,10 +76,13 @@ class SqlAlchemyPatientRepository(PatientRepository):
         return [PatientMapper.to_entity(m) for m in models]
 
     async def update(self, patient: Patient) -> Patient:
-        """Atualiza um paciente existente."""
+        """Atualiza um paciente existente, validando propriedade."""
         from app.core.exceptions import EntityNotFoundError
         
-        stmt = select(PatientModel).where(PatientModel.id == str(patient.id))
+        stmt = select(PatientModel).where(
+            PatientModel.id == str(patient.id),
+            PatientModel.user_id == str(patient.user_id),
+        )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:
@@ -81,9 +92,12 @@ class SqlAlchemyPatientRepository(PatientRepository):
         await self._session.refresh(model)
         return PatientMapper.to_entity(model)
 
-    async def delete(self, patient_id: UUID) -> bool:
-        """Remove um paciente (hard delete)."""
-        stmt = select(PatientModel).where(PatientModel.id == str(patient_id))
+    async def delete(self, user_id: UUID, patient_id: UUID) -> bool:
+        """Remove um paciente (hard delete), validando propriedade."""
+        stmt = select(PatientModel).where(
+            PatientModel.id == str(patient_id),
+            PatientModel.user_id == str(user_id),
+        )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:

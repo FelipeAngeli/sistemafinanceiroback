@@ -4,7 +4,7 @@ Representa um paciente atendido pela psicóloga.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -25,11 +25,12 @@ class Patient:
     """Entidade Paciente."""
 
     name: str
+    user_id: UUID
     email: Optional[str] = None
     phone: Optional[str] = None
     observation: Optional[str] = None
     id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: Optional[datetime] = None
     active: bool = True
 
@@ -78,12 +79,12 @@ class Patient:
     def deactivate(self) -> None:
         """Desativa o paciente (soft delete)."""
         self.active = False
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def activate(self) -> None:
         """Reativa o paciente."""
         self.active = True
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def is_active(self) -> bool:
         """Verifica se o paciente está ativo."""
@@ -114,4 +115,4 @@ class Patient:
             self.observation = observation
             if len(self.observation) > 1000:
                 raise ValidationError("Observação não pode ter mais de 1000 caracteres.")
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)

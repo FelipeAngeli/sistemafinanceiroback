@@ -19,6 +19,7 @@ from app.domain.repositories.session_repository import SessionRepository
 class GetSessionByIdInput:
     """Dados de entrada para busca de sessão por ID."""
 
+    user_id: UUID
     session_id: UUID
 
 
@@ -52,7 +53,10 @@ class GetSessionByIdUseCase:
 
     async def execute(self, input_data: GetSessionByIdInput) -> GetSessionByIdOutput:
         """Executa a busca de sessão por ID."""
-        session = await self._repository.get_by_id(input_data.session_id)
+        session = await self._repository.get_by_id(
+            user_id=input_data.user_id,
+            session_id=input_data.session_id
+        )
 
         if not session:
             raise NotFoundError(

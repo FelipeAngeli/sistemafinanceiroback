@@ -20,8 +20,12 @@ class PatientRepository(ABC):
     """
 
     @abstractmethod
-    async def get_stats(self) -> PatientStats:
-        """Retorna estatísticas gerais dos pacientes (total, ativos, inativos)."""
+    async def get_stats(self, user_id: UUID) -> PatientStats:
+        """Retorna estatísticas gerais dos pacientes (total, ativos, inativos) do usuário.
+        
+        Args:
+            user_id: UUID do usuário.
+        """
         ...
 
     @abstractmethod
@@ -37,26 +41,28 @@ class PatientRepository(ABC):
         ...
 
     @abstractmethod
-    async def get_by_id(self, patient_id: UUID) -> Optional[Patient]:
+    async def get_by_id(self, user_id: UUID, patient_id: UUID) -> Optional[Patient]:
         """Busca paciente por ID.
 
         Args:
+            user_id: UUID do usuário (dono do paciente).
             patient_id: UUID do paciente.
 
         Returns:
-            Patient se encontrado, None caso contrário.
+            Patient se encontrado e pertencer ao usuário, None caso contrário.
         """
         ...
 
     @abstractmethod
-    async def list_all(self, active_only: bool = True) -> List[Patient]:
-        """Lista todos os pacientes.
+    async def list_all(self, user_id: UUID, active_only: bool = True) -> List[Patient]:
+        """Lista todos os pacientes do usuário.
 
         Args:
+            user_id: UUID do usuário.
             active_only: Se True, retorna apenas pacientes ativos.
 
         Returns:
-            Lista de pacientes.
+            Lista de pacientes do usuário.
         """
         ...
 
@@ -73,13 +79,14 @@ class PatientRepository(ABC):
         ...
 
     @abstractmethod
-    async def delete(self, patient_id: UUID) -> bool:
+    async def delete(self, user_id: UUID, patient_id: UUID) -> bool:
         """Remove um paciente (hard delete).
 
         Args:
+            user_id: UUID do usuário (dono do paciente).
             patient_id: UUID do paciente a ser removido.
 
         Returns:
-            True se removido com sucesso, False se não encontrado.
+            True se removido com sucesso, False se não encontrado ou não pertencer ao usuário.
         """
         ...

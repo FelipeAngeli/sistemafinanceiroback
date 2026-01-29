@@ -15,6 +15,7 @@ from app.domain.repositories.patient_repository import PatientRepository
 class ListPatientsInput:
     """Dados de entrada para listagem de pacientes."""
 
+    user_id: UUID
     active_only: bool = True
 
 
@@ -52,7 +53,10 @@ class ListPatientsUseCase:
 
     async def execute(self, input_data: ListPatientsInput) -> ListPatientsOutput:
         """Executa a listagem de pacientes."""
-        patients = await self._repository.list_all(active_only=input_data.active_only)
+        patients = await self._repository.list_all(
+            user_id=input_data.user_id,
+            active_only=input_data.active_only,
+        )
 
         summaries = [
             PatientSummary(

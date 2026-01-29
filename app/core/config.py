@@ -96,6 +96,12 @@ class Settings(BaseSettings):
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         return v
 
+    # Security
+    secret_key: str = Field(
+        default="your-secret-key-change-in-production",
+        description="Chave secreta para JWT tokens. DEVE ser alterada em produção.",
+    )
+
     # AWS (para deploy)
     aws_region: str = Field(default="us-east-1")
     aws_lambda_mode: bool = Field(

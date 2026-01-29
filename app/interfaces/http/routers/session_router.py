@@ -12,6 +12,7 @@ from app.interfaces.http.dependencies import (
     UpdateSessionUC,
     GetSessionByIdUC,
 )
+from app.interfaces.http.dependencies.auth import CurrentUser
 from app.interfaces.http.schemas.session_schemas import (
     SessionCreate,
     SessionListItem,
@@ -37,6 +38,7 @@ router = APIRouter(prefix="/sessions", tags=["Sessões"])
     description="Lista sessões com filtros opcionais por paciente, status e período.",
 )
 async def list_sessions(
+    current_user: CurrentUser,
     use_case: ListSessionsUC,
     patient_id: Optional[UUID] = Query(None, description="Filtrar por paciente"),
     status: Optional[str] = Query(
@@ -48,8 +50,13 @@ async def list_sessions(
     end_date: Optional[date] = Query(None, description="Data final"),
     limit: int = Query(50, ge=1, le=100, description="Limite de resultados"),
 ) -> SessionListResponse:
-    """Lista sessões com filtros opcionais."""
+    """Lista sessões do usuário autenticado com filtros opcionais.
+    
+    **Autenticação:**
+    Requer token JWT válido. Retorna apenas sessões do usuário autenticado.
+    """
     input_data = ListSessionsInput(
+        user_id=current_user.id,
         patient_id=patient_id,
         status=status,
         start_date=start_date,
@@ -83,13 +90,18 @@ async def list_sessions(
 )
 async def create_session(
     data: SessionCreate,
+    current_user: CurrentUser,
     use_case: CreateSessionUC,
 ) -> SessionResponse:
-    """Cria uma nova sessão.
+    """Cria uma nova sessão para o usuário autenticado.
+    
+    **Autenticação:**
+    Requer token JWT válido. O paciente deve pertencer ao usuário autenticado.
     
     Exceções são tratadas pelos handlers globais.
     """
     input_data = CreateSessionInput(
+        user_id=current_user.id,
         patient_id=data.patient_id,
         date_time=data.date_time,
         price=data.price,
@@ -168,21 +180,28 @@ async def create_session(
 )
 async def get_session(
     session_id: UUID,
+    current_user: CurrentUser,
     use_case: GetSessionByIdUC,
 ) -> SessionResponse:
-    """Busca uma sessão específica pelo seu ID único.
+    """Busca uma sessão específica pelo seu ID único do usuário autenticado.
     
     **Parâmetros:**
     - `session_id`: UUID da sessão a ser buscada
+    
+    **Autenticação:**
+    Requer token JWT válido. Retorna 404 se sessão não pertencer ao usuário.
     
     **Retorna:**
     - Objeto SessionResponse com todos os detalhes da sessão
     
     **Erros:**
-    - `404`: Sessão não encontrada
+    - `404`: Sessão não encontrada ou não pertence ao usuário
     - `422`: ID inválido (não é um UUID válido)
     """
-    input_data = GetSessionByIdInput(session_id=session_id)
+    input_data = GetSessionByIdInput(
+        user_id=current_user.id,
+        session_id=session_id
+    )
     output = await use_case.execute(input_data)
     
     return SessionResponse(
@@ -282,6 +301,7 @@ async def get_session(
 async def update_session(
     session_id: UUID,
     data: SessionUpdate,
+    current_user: CurrentUser,
     use_case: UpdateSessionUC,
 ) -> SessionResponse:
     """Atualiza dados de uma sessão existente (atualização parcial).
@@ -289,16 +309,19 @@ async def update_session(
     **Parâmetros:**
     - `session_id`: UUID da sessão a ser atualizada
     - `data`: Dados para atualização (todos os campos são opcionais)
-      - `patient_id`: Transferir sessão para outro paciente
+      - `patient_id`: Transferir sessão para outro paciente (deve pertencer ao usuário)
       - `date_time`: Nova data e hora
       - `price`: Novo valor
       - `notes`: Atualizar observações
+    
+    **Autenticação:**
+    Requer token JWT válido. Retorna 404 se sessão não pertencer ao usuário.
     
     **Retorna:**
     - Objeto SessionResponse com todos os dados atualizados
     
     **Erros:**
-    - `404`: Sessão não encontrada
+    - `404`: Sessão não encontrada ou não pertence ao usuário
     - `422`: Dados inválidos (patient_id inexistente, preço negativo, etc.)
     
     **Importante:**
@@ -306,6 +329,7 @@ async def update_session(
     - Para alterar o status, use o endpoint PATCH /sessions/{id}/status
     """
     input_data = UpdateSessionInput(
+        user_id=current_user.id,
         session_id=session_id,
         patient_id=data.patient_id,
         date_time=data.date_time,
@@ -339,13 +363,18 @@ async def update_session(
 async def update_session_status(
     session_id: UUID,
     data: SessionStatusUpdate,
+    current_user: CurrentUser,
     use_case: UpdateSessionStatusUC,
 ) -> SessionStatusResponse:
-    """Atualiza o status de uma sessão.
+    """Atualiza o status de uma sessão do usuário autenticado.
+    
+    **Autenticação:**
+    Requer token JWT válido. Retorna 404 se sessão não pertencer ao usuário.
     
     Exceções são tratadas pelos handlers globais.
     """
     input_data = UpdateSessionStatusInput(
+        user_id=current_user.id,
         session_id=session_id,
         new_status=data.new_status,
         notes=data.notes,

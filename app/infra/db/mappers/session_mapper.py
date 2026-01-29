@@ -15,6 +15,7 @@ class SessionMapper:
         """Converte entidade de domínio para model ORM."""
         return SessionModel(
             id=str(entity.id),
+            user_id=str(entity.user_id),
             patient_id=str(entity.patient_id),
             date_time=entity.date_time,
             duration_minutes=entity.duration_minutes,
@@ -30,6 +31,7 @@ class SessionMapper:
         """Converte model ORM para entidade de domínio."""
         session = object.__new__(Session)
         object.__setattr__(session, "id", UUID(model.id))
+        object.__setattr__(session, "user_id", UUID(model.user_id))
         object.__setattr__(session, "patient_id", UUID(model.patient_id))
         object.__setattr__(session, "date_time", model.date_time)
         object.__setattr__(session, "duration_minutes", model.duration_minutes)
@@ -43,6 +45,7 @@ class SessionMapper:
     @staticmethod
     def update_model(model: SessionModel, entity: Session) -> SessionModel:
         """Atualiza model existente com dados da entidade."""
+        model.user_id = str(entity.user_id)
         model.patient_id = str(entity.patient_id)
         model.date_time = entity.date_time
         model.duration_minutes = entity.duration_minutes
