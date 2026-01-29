@@ -1,6 +1,8 @@
 """Implementação SQLAlchemy do repositório de dashboard."""
 
 from datetime import date, datetime, time
+from decimal import Decimal
+from uuid import UUID
 
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,8 +65,8 @@ class SqlAlchemyDashboardRepository(DashboardRepository):
         row = result.one()
 
         return DashboardFinancialStatsDTO(
-            total_received=row.total_received or 0,
-            total_pending=row.total_pending or 0,
+            total_received=Decimal(row.total_received or 0),
+            total_pending=Decimal(row.total_pending or 0),
             total_entries=row.total_entries or 0,
             pending_count=row.pending_count or 0,
             entries=[],
