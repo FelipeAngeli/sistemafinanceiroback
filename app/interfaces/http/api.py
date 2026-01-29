@@ -123,26 +123,44 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
         },
     )
 
-    cors_allow_origins = [
-        "https://sistemafinanceiroback.onrender.com",
-        "http://localhost:8080",
-        "*",
-    ]
-
+    # Obter origens CORS das configurações
+    cors_allow_origins = settings.cors_origins.copy()
+    
+    # IMPORTANTE: Quando allow_credentials=True, não podemos usar "*" como origem
+    # Se houver "*" na lista, removemos e tratamos separadamente
+    allow_all_origins = "*" in cors_allow_origins
+    if allow_all_origins:
+        cors_allow_origins.remove("*")
+    
     # CORS - DEVE SER O PRIMEIRO MIDDLEWARE para processar requisições OPTIONS corretamente
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_allow_origins,
-        allow_credentials=True,
-        allow_methods=["*"],  # Inclui OPTIONS automaticamente
-        allow_headers=["*"],
-        expose_headers=["*"],  # Expõe todos os headers na resposta
-    )
+    # Se allow_all_origins=True, usamos ["*"] mas com allow_credentials=False
+    # Caso contrário, usamos a lista específica com allow_credentials=True
+    if allow_all_origins and not cors_allow_origins:
+        # Se só tem "*" e nenhuma origem específica, permite todas sem credentials
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=False,  # Não pode ser True com "*"
+            allow_methods=["*"],  # Inclui OPTIONS automaticamente
+            allow_headers=["*"],
+            expose_headers=["*"],
+        )
+    else:
+        # Usa lista específica de origens com credentials habilitado
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_allow_origins if cors_allow_origins else ["*"],
+            allow_credentials=True if cors_allow_origins else False,
+            allow_methods=["*"],  # Inclui OPTIONS automaticamente
+            allow_headers=["*"],
+            expose_headers=["*"],
+        )
 
     # Exception handlers globais (depois do CORS)
     register_exception_handlers(app)
 
     # Handler explícito para OPTIONS (fallback caso o middleware não capture)
+    # Este handler garante que OPTIONS requests sempre retornem 200 mesmo para rotas inexistentes
     @app.options("/{full_path:path}")
     async def options_handler(request: Request, full_path: str) -> Response:
         """Handler para requisições OPTIONS não capturadas pelo middleware CORS.
@@ -151,25 +169,33 @@ Desenvolvido seguindo **Clean Architecture** com separação clara entre:
         a maioria das requisições OPTIONS antes que cheguem aqui.
         """
         origin = request.headers.get("origin")
-        # Verifica se a origem está na lista de origens permitidas
-        if "*" in cors_allow_origins and origin:
-            allowed_origin = origin
+        
+        # Determina origem permitida
+        if allow_all_origins:
+            # Se permite todas as origens, usa a origem da requisição ou "*"
+            allowed_origin = origin if origin else "*"
+            allow_creds = False  # Não pode ser True com "*"
         else:
-            allowed_origin = origin if origin in cors_allow_origins else None
+            # Verifica se a origem está na lista permitida
+            if origin and origin in cors_allow_origins:
+                allowed_origin = origin
+                allow_creds = True
+            elif origin:
+                # Origem não permitida - retorna sem CORS headers
+                return Response(status_code=200)
+            else:
+                # Sem origem (requisição não-CORS)
+                allowed_origin = "*"
+                allow_creds = False
         
         headers = {
             "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Origin": allowed_origin,
         }
         
-        # Só adiciona Access-Control-Allow-Origin se a origem for permitida
-        # ou se não houver origem (requisição não-CORS)
-        if allowed_origin:
-            headers["Access-Control-Allow-Origin"] = allowed_origin
+        if allow_creds:
             headers["Access-Control-Allow-Credentials"] = "true"
-        elif not origin:
-            # Se não há origem, permite qualquer origem (requisição não-CORS)
-            headers["Access-Control-Allow-Origin"] = "*"
         
         return Response(status_code=200, headers=headers)
 

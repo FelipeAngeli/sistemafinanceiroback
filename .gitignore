@@ -57,3 +57,6 @@ coverage_report.txt
 
 # Logs
 *.log
+
+# Editor history
+.history/
